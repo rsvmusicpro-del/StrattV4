@@ -93,19 +93,10 @@ jobs:
           cd ../..
           unzip -t StrattV4.bwextension
 
-      - name: Upload StrattV4 test extension
+      - name: Upload the single StrattV4 test extension
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: StrattV4-Push1-Test
           path: StrattV4.bwextension
           if-no-files-found: error
           retention-days: 7
-
-      - name: Upload StrattV4 release candidate
-        if: github.ref == 'refs/heads/evolution'
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
-        with:
-          name: StrattV4-Push1
-          path: StrattV4.bwextension
-          if-no-files-found: error
-          retention-days: 30

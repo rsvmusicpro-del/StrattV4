@@ -14,7 +14,11 @@ class Push1BuildPipelineTests(unittest.TestCase):
         source = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1", source)
         self.assertIn("uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad", source)
-        self.assertEqual(source.count("uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9"), 2)
+        upload_action = "uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9"
+        self.assertEqual(source.count(upload_action), 1, "the workflow must publish exactly one test artifact")
+        self.assertEqual(source.count("name: StrattV4-Push1-Test"), 1)
+        self.assertNotIn("StrattV4-Push1\n", source)
+        self.assertNotIn("Upload StrattV4 release candidate", source)
         self.assertNotIn("actions/checkout@v4", source)
         self.assertNotIn("actions/setup-java@v4", source)
         self.assertNotIn("actions/upload-artifact@v4", source)
@@ -102,6 +106,7 @@ class Push1BuildPipelineTests(unittest.TestCase):
             "apply_push1_poly_sequencer_lifecycle.py",
             "apply_push1_note_sequencer_lifecycle.py",
             "apply_push1_modifier_gestures.py",
+            "apply_push1_note_edit_touch_owner.py",
             "apply_push1_note_edit_touch_owner.py",
             "apply_push1_navigation.py",
             "apply_push1_french.py",
@@ -204,6 +209,7 @@ class Push1BuildPipelineTests(unittest.TestCase):
         self.assertIn("apply_push1_note_sequencer_lifecycle.py", patcher)
         self.assertIn("apply_push1_modifier_gestures.py", patcher)
         self.assertIn("apply_push1_note_edit_touch_owner.py", patcher)
+
 
 if __name__ == "__main__":
     unittest.main()
