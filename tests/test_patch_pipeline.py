@@ -74,6 +74,32 @@ class TransactionalPatchPipelineTests(unittest.TestCase):
             self.assertTrue(staging.is_dir())
             self.assertFalse(backup.exists())
 
+    def test_patch_runner_executes_registry_in_declared_order(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            with patch.object(pipeline.subprocess, "run") as run:
+                pipeline.run_patch_steps(Path(temporary))
+
+        self.assertEqual(run.call_count, len(pipeline.PATCH_STEPS))
+        for call, step, script in zip(run.call_args_list, pipeline.PATCH_STEPS, pipeline.PATCH_SCRIPTS):
+            self.assertEqual(call.args[0][-1], str(script))
+            self.assertEqual(call.kwargs["cwd"], Path(temporary))
+            self.assertEqual(step.script, script.name)
+
+    def test_patch_runner_stops_at_first_failed_step_with_context(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            with patch.object(
+                pipeline.subprocess,
+                "run",
+                side_effect=[None, pipeline.subprocess.CalledProcessError(7, ["python", "bad.py"])],
+            ) as run:
+                with self.assertRaisesRegex(
+                    SystemExit,
+                    "apply_push1_master_display.py.*exit code 7",
+                ):
+                    pipeline.run_patch_steps(Path(temporary))
+
+        self.assertEqual(run.call_count, 2)
+
     def test_upstream_revision_guard_accepts_only_the_pinned_sha(self):
         result = type("Completed", (), {"stdout": pipeline.EXPECTED_UPSTREAM + "\n"})()
         with patch.object(pipeline.subprocess, "run", return_value=result):
