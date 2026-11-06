@@ -88,7 +88,6 @@ class Push1TrackReorderTests(unittest.TestCase):
             self.assertEqual(patched.count("Push1TrackMoveCommand.isGestureActive"), 1)
             self.assertIn("activeMode.selectPreviousItemPage ();", patched)
             self.assertIn("activeMode.selectNextItemPage ();", patched)
-            self.assertIn("import de.mossgrabers.framework.daw.data.ICursorTrack;", patched)
             self.assertTrue((trigger / "Push1TrackMoveCommand.java").is_file())
 
 

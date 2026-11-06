@@ -78,13 +78,6 @@ final class Push1TrackMoveCommand
 def patch_cursor_command() -> None:
     path = TRIGGER / "PushCursorCommand.java"
     source = path.read_text(encoding="utf-8")
-    source = replace_once(
-        source,
-        "import de.mossgrabers.framework.view.Views;\\n",
-        "import de.mossgrabers.framework.daw.data.ICursorTrack;\\n"
-        "import de.mossgrabers.framework.view.Views;\\n",
-        "PushCursorCommand ICursorTrack import",
-    )
     left_anchor = """    protected void scrollLeft ()
     {
         final IMode activeMode = this.surface.getModeManager ().getActive ();
@@ -119,7 +112,7 @@ def patch_cursor_command() -> None:
 
         if (Push1TrackMoveCommand.isGestureActive (this.surface))
         {
-            final ICursorTrack cursorTrack = this.model.getCursorTrack ();
+            final de.mossgrabers.framework.daw.data.ICursorTrack cursorTrack = this.model.getCursorTrack ();
             final boolean canMove = cursorTrack != null && cursorTrack.doesExist () && !cursorTrack.hasParent ();
             this.canScrollLeft = canMove && cursorTrack.canSelectPrevious ();
             this.canScrollRight = canMove && cursorTrack.canSelectNext ();
