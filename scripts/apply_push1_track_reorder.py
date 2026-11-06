@@ -79,7 +79,13 @@ def patch_cursor_command() -> None:
     path = TRIGGER / "PushCursorCommand.java"
     source = path.read_text(encoding="utf-8")
     source = replace_once(
-        source,\n        "import de.mossgrabers.framework.daw.IModel;\\n",\n        "import de.mossgrabers.framework.daw.IModel;\\n"\n        "import de.mossgrabers.framework.daw.data.ICursorTrack;\\n",\n        "PushCursorCommand ICursorTrack import",\n    )\n    left_anchor = """    protected void scrollLeft ()
+        source,
+        "import de.mossgrabers.framework.daw.IModel;\\n",
+        "import de.mossgrabers.framework.daw.IModel;\\n"
+        "import de.mossgrabers.framework.daw.data.ICursorTrack;\\n",
+        "PushCursorCommand ICursorTrack import",
+    )
+    left_anchor = """    protected void scrollLeft ()
     {
         final IMode activeMode = this.surface.getModeManager ().getActive ();
 """
