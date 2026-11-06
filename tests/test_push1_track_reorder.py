@@ -57,7 +57,7 @@ class Push1TrackReorderTests(unittest.TestCase):
             trigger = Path(temporary) / "vendor/DrivenByMoss/src/main/java/de/mossgrabers/controller/ableton/push/command/trigger"
             trigger.mkdir(parents=True)
             (trigger / "PushCursorCommand.java").write_text(
-                "import de.mossgrabers.framework.daw.IModel;\n"
+                "import de.mossgrabers.framework.view.Views;\n"
                 "class PushCursorCommand {\n"
                 "    protected void scrollLeft ()\n    {\n"
                 "        final IMode activeMode = this.surface.getModeManager ().getActive ();\n"

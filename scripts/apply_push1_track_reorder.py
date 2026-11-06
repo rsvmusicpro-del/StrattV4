@@ -80,9 +80,9 @@ def patch_cursor_command() -> None:
     source = path.read_text(encoding="utf-8")
     source = replace_once(
         source,
-        "import de.mossgrabers.framework.daw.IModel;\\n",
-        "import de.mossgrabers.framework.daw.IModel;\\n"
-        "import de.mossgrabers.framework.daw.data.ICursorTrack;\\n",
+        "import de.mossgrabers.framework.view.Views;\\n",
+        "import de.mossgrabers.framework.daw.data.ICursorTrack;\\n"
+        "import de.mossgrabers.framework.view.Views;\\n",
         "PushCursorCommand ICursorTrack import",
     )
     left_anchor = """    protected void scrollLeft ()
