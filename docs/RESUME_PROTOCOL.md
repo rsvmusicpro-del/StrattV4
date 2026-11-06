@@ -5,7 +5,11 @@
 - Projet : StrattV4
 - Extension produite : `StrattV4.bwextension`
 - Dépôt : `rsvmusicpro-del/StrattV4`
-- Branche de travail initiale : `v4-foundation`
+- Branche de travail unique : `evolution`
+- Branche baseline immuable : `v4-foundation` (ne jamais modifier)
+- Commit baseline validé : `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`
+- Build baseline : `Build StrattV4 Push 1` #3 — run `42248099882`
+- Politique anti-régression : `docs/REGRESSION_POLICY.md`
 - Cible : Ableton Push 1 et Bitwig Studio 4.3.10
 - Java : 17
 - Source amont : DrivenByMoss 19.2.2
@@ -21,18 +25,22 @@
 6. Ne pas déclarer une validation matérielle sur la seule base d'un build CI.
 7. Ne pas réécrire l'historique, force-push ou supprimer de branche.
 8. Tout changement fonctionnel doit être accompagné d'un test de non-régression et d'un compte rendu.
+9. La baseline `v4-foundation` / `ec5871a` est intouchable. Toutes les évolutions se font exclusivement sur `evolution`.
+10. Aucun comportement du build #3 validé ne peut être supprimé ou dégradé. Lire `docs/REGRESSION_POLICY.md` avant chaque changement.
 
 ## Procédure de reprise
 
 Au début de chaque session :
 
-1. Lire intégralement ce document et le README.
-2. Lire l'état GitHub du dépôt et relever la branche active et son SHA.
-3. Vérifier la présence du sous-module et sa révision exacte.
-4. Lire les derniers commits, PR, workflows, résultats de tests et artefacts.
-5. Examiner les modifications non consignées avant d'agir.
-6. Reprendre la première tâche non terminée du journal de travail.
-7. En cas d'incertitude sur un état, vérifier GitHub ; ne jamais supposer.
+1. Lire intégralement ce document, le README et `docs/REGRESSION_POLICY.md`.
+2. Vérifier que la branche active est `evolution`. Toute autre branche est en lecture seule, notamment `v4-foundation`.
+3. Comparer le HEAD de `evolution` à la baseline `ec5871aed16ae1fe8a40ec27943f5561b5b7b168` et expliquer chaque différence.
+4. Lire l'état GitHub du dépôt et relever la branche active et son SHA.
+5. Vérifier la présence du sous-module et sa révision exacte.
+6. Lire les derniers commits, PR, workflows, résultats de tests et artefacts.
+7. Examiner les modifications non consignées avant d'agir.
+8. Reprendre la première tâche non terminée du journal de travail.
+9. En cas d'incertitude sur un état, vérifier GitHub ; ne jamais supposer.
 
 Marqueurs de procédure : `STRATTV4_RESUME`, `STRATTV4_ONLY`.
 
@@ -85,3 +93,8 @@ La workflow GitHub Actions doit :
 - Branche : `v4-foundation`
 - Arbre initial : scripts, tests, sous-module amont, workflow et README.
 - Prochaine action : obtenir un build CI sur ce dépôt, corriger les erreurs éventuelles sans affaiblir les tests, puis exécuter l'audit complet.
+
+
+## Baseline validée et branche unique
+
+Voir impérativement `docs/REGRESSION_POLICY.md`. La baseline matérielle est le commit `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`, build #3, run `42248099882`, artefact digest `sha256:1a93fc5541b98b93ad98a9aebb51151452cb20b6c8c01f5a94dad892eb472dab`. La seule branche d'évolution autorisée est `evolution`. `v4-foundation` est réservée à la comparaison et ne doit recevoir aucun commit.
