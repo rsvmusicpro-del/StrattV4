@@ -7,11 +7,8 @@ ROOT = Path("vendor/DrivenByMoss/src/main/java/de/mossgrabers")
 TRIGGER = ROOT / "controller/ableton/push/command/trigger"
 
 
-def replace_once(source: str, old: str, new: str, label: str) -> str:
-    count = source.count(old)
-    if count != 1:
-        raise SystemExit(f"{label}: expected one insertion point, found {count}")
-    return source.replace(old, new, 1)
+from patch_utils import replace_once
+
 
 
 HELPER_SOURCE = r"""// Written for StrattV4.

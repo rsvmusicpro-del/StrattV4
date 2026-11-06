@@ -7,11 +7,8 @@ ROOT = Path("vendor/DrivenByMoss/src/main/java/de/mossgrabers")
 SOURCE = ROOT / "framework/view/sequencer/AbstractPolySequencerView.java"
 
 
-def replace_once(source: str, old: str, new: str, label: str) -> str:
-    count = source.count(old)
-    if count != 1:
-        raise SystemExit(f"{label}: expected one insertion point, found {count}")
-    return source.replace(old, new, 1)
+from patch_utils import replace_once
+
 
 
 source = SOURCE.read_text(encoding="utf-8")

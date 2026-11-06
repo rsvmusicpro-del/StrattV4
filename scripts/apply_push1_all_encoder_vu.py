@@ -6,11 +6,8 @@ from pathlib import Path
 ROOT = Path("vendor/DrivenByMoss/src/main/java/de/mossgrabers")
 
 
-def replace_once(source: str, old: str, new: str, label: str) -> str:
-    count = source.count(old)
-    if count != 1:
-        raise SystemExit(f"{label}: expected exactly one anchor, found {count}")
-    return source.replace(old, new, 1)
+from patch_utils import replace_once
+
 
 
 # Push 1 rotary controls expose separate command and native-parameter paths.

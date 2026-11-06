@@ -128,11 +128,8 @@ ORIGINAL_COLORS = [
 ]
 
 
-def replace_once(source: str, old: str, new: str, label: str) -> str:
-    count = source.count(old)
-    if count != 1:
-        raise SystemExit(f"{label}: expected one insertion point, found {count}")
-    return source.replace(old, new, 1)
+from patch_utils import replace_once
+
 
 
 if len(EXTRA_COLORS) != 37 or len(PALETTE_ORDER) != 64:

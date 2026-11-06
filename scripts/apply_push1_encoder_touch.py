@@ -47,11 +47,8 @@ public final class KnobTouchOwner<T>
 }
 """
 
-def replace_once(source: str, old: str, new: str, label: str) -> str:
-    count = source.count(old)
-    if count != 1:
-        raise SystemExit(f"{label}: expected one insertion point, found {count}")
-    return source.replace(old, new, 1)
+from patch_utils import replace_once
+
 
 
 def main() -> None:

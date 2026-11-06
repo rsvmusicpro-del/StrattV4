@@ -9,11 +9,8 @@ BROWSER = ROOT / "controller/ableton/push/mode/device/DeviceBrowserMode.java"
 FRENCH = ROOT / "controller/ableton/push/controller/Push1French.java"
 
 
-def replace_once(source: str, old: str, new: str, label: str) -> str:
-    count = source.count(old)
-    if count != 1:
-        raise SystemExit(f"{label}: expected one insertion point, found {count}")
-    return source.replace(old, new, 1)
+from patch_utils import replace_once
+
 
 
 # Reuse the upstream value changer and reset the horizontal viewport whenever

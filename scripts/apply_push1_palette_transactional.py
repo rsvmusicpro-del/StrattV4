@@ -41,11 +41,15 @@ PATCH_SCRIPTS = (
     REPOSITORY_ROOT / "scripts" / "apply_push1_new_scene_gesture.py",
 )
 EXPECTED_UPSTREAM = "013620c1330cdcf896e96ef8fdc8a2123e4fce6a"
+PATCH_UTILS = REPOSITORY_ROOT / "scripts" / "patch_utils.py"
 
 
 def main() -> int:
     if not SOURCE_ROOT.is_dir():
         raise SystemExit(f"DrivenByMoss source tree is missing: {SOURCE_ROOT}")
+    if not PATCH_UTILS.is_file():
+        raise SystemExit(f"Shared patch utility is missing: {PATCH_UTILS}")
+
     for patch_script in PATCH_SCRIPTS:
         if not patch_script.is_file():
             raise SystemExit(f"Patch script is missing: {patch_script}")

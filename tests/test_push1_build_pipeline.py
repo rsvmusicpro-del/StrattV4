@@ -124,6 +124,41 @@ class Push1BuildPipelineTests(unittest.TestCase):
                 self.assertEqual(source.count(f'"{name}"'), 1)
 
 
+    def test_shared_patch_helper_is_used_by_every_exact_anchor_patch(self):
+        scripts = (
+            "apply_push1_all_encoder_vu.py",
+            "apply_push1_clip_accent.py",
+            "apply_push1_device_reorder.py",
+            "apply_push1_encoder_touch.py",
+            "apply_push1_french.py",
+            "apply_push1_long_names.py",
+            "apply_push1_midi_lifecycle.py",
+            "apply_push1_modifier_gestures.py",
+            "apply_push1_navigation.py",
+            "apply_push1_new_scene.py",
+            "apply_push1_new_scene_gesture.py",
+            "apply_push1_note_edit_touch_owner.py",
+            "apply_push1_note_sequencer_lifecycle.py",
+            "apply_push1_palette.py",
+            "apply_push1_playhead.py",
+            "apply_push1_poly_sequencer_lifecycle.py",
+            "apply_push1_small_knob_guard.py",
+            "apply_push1_smart.py",
+            "apply_push1_startup_message.py",
+            "apply_push1_touch_lifecycle.py",
+            "apply_push1_track_reorder.py",
+        )
+        for name in scripts:
+            with self.subTest(script=name):
+                source = (ROOT / "scripts" / name).read_text(encoding="utf-8")
+                self.assertIn("from patch_utils import replace_once", source)
+                self.assertNotIn("def replace_once(", source)
+
+    def test_shared_patch_helper_has_direct_unit_coverage(self):
+        source = (ROOT / "scripts/patch_utils.py").read_text(encoding="utf-8")
+        self.assertIn("expected exactly one source anchor", source)
+        self.assertIn("source.count(old)", source)
+
     def test_push1_startup_message_is_left_aligned_at_top(self):
         source = (ROOT / "scripts/apply_push1_startup_message.py").read_text(encoding="utf-8")
         self.assertIn('"     Please start"', source)
