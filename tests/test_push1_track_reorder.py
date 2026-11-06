@@ -88,13 +88,13 @@ class Push1TrackReorderTests(unittest.TestCase):
                 "}\\n",
                 encoding="utf-8",
             )
-            subprocess.run(
+            result = subprocess.run(
                 [sys.executable, "-B", str(SCRIPT)],
                 cwd=temporary,
-                check=True,
                 capture_output=True,
                 text=True,
             )
+            self.assertEqual(result.returncode, 0, result.stderr)
             patched = (trigger / "PushCursorCommand.java").read_text(encoding="utf-8")
             self.assertEqual(patched.count("Push1TrackMoveCommand.executeIfRequested"), 2)
             self.assertEqual(patched.count("Push1TrackMoveCommand.isGestureActive"), 1)
