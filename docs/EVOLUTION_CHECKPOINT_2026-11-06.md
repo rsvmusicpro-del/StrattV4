@@ -73,3 +73,30 @@ Le propriétaire du projet confirme que le dernier commit et son build de test o
 ## Réaffectation après échec matériel
 
 Le geste SELECT + flèches du commit e08055f3d835cec71e99f930b6f0021951927b71 est rejeté matériellement. Nouveau geste : SHIFT+LEFT déplace le top-level track/group vers la gauche ; SHIFT+RIGHT vers la droite, dans Session, Track et Volume. SELECT+LEFT/RIGHT ne doit plus déplacer les pistes. Les pistes enfants restent protégées par l'API globale d'insertion. Validation matérielle en attente.
+
+
+## Audit de restauration du déplacement des pistes — 2026-11-06
+
+### Cause de la disparition
+
+L'historique Git confirme que l'ancien patch personnalisé de navigation modifiait directement `PushCursorCommand.scrollLeft/scrollRight`. Il remplaçait la délégation native vers `activeMode.selectPreviousItemPage()` et `activeMode.selectNextItemPage()` par une logique de navigation de banque et des conditions de déplacement ajoutées dans le curseur. Ce détournement empêchait le mode de piste natif de recevoir le geste SHIFT + flèche et donc d'exécuter le déplacement DrivenByMoss.
+
+Le commit `50ec514c68b3fd4bd08df69f3f9db15a1fa70225` retire cette surcharge de `scripts/apply_push1_navigation.py` et rétablit le chemin natif. Dans DrivenByMoss 19.2.2, `AbstractTrackMode` interprète SHIFT + gauche/droite et appelle respectivement `ICursorTrack.swapWithPrevious()` / `swapWithNext()`. L'adaptateur Bitwig déplace le Track via `TrackInsertionPoint.moveTracks()`.
+
+### Affectation restaurée
+
+- SHIFT + flèche gauche/droite dans les modes de piste/mixage qui héritent du comportement natif : déplacement de la piste sélectionnée d'une position.
+- Sans SHIFT : navigation de page native inchangée.
+- Le patch de navigation IN/OUT reste distinct.
+- Aucun second gestionnaire de déplacement de piste n'est installé : le mécanisme amont est conservé.
+- Les vérifications source confirment le routage PushCursorCommand → AbstractTrackMode → CursorTrackImpl. Elles ne remplacent pas une recette physique détaillée, en particulier pour les Group Tracks imbriqués et les limites.
+
+### État des preuves au moment de l'audit
+
+- Commit HEAD avant ce point de sauvegarde : `328089255626ec39ed2f400bea32db6f4a6f7bd5`.
+- Comparaison avec `v4-foundation` : 38 commits en avance, 0 en retard ; baseline `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`.
+- Dernier build CI consultable : #21, run `42265014484`, succès sur `2b26d1203e8c3923a27df0a1b1f95d83235c9e7d`, artefact ID `13526433106`, SHA-256 `2d9f70c125e5a9d407ced37a66753f80c259a198de24bcb8f1a23703cb258dd4`.
+- Aucun run CI n'était associé au HEAD `3280892` au moment de l'audit. Le build #21 ne doit donc pas être présenté comme une compilation de ce HEAD.
+- Le propriétaire a confirmé le 2026-11-06 la validation matérielle positive du dernier test du dernier commit en date. Le scénario exact et le SHA du binaire testé n'ont pas été précisés dans son rapport ; cette confirmation est conservée comme déclaration utilisateur, sans étendre sa portée à des scénarios non décrits.
+
+La prochaine compilation CI doit être associée au nouveau commit de ce point de sauvegarde. Une validation CI prouvera la compilation et les tests automatisés, pas à elle seule la validation de chaque combinaison matérielle.

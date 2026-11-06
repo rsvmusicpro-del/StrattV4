@@ -16,6 +16,12 @@ class Push1TrackReorderTests(unittest.TestCase):
         self.assertNotIn("swapWithPrevious", patcher)
         self.assertNotIn("swapWithNext", patcher)
 
+    def test_transactional_pipeline_does_not_install_a_competing_track_move_patch(self):
+        patcher = (ROOT / "scripts/apply_push1_palette_transactional.py").read_text(encoding="utf-8")
+        self.assertIn("apply_push1_navigation.py", patcher)
+        self.assertNotIn("apply_push1_track_reorder.py", patcher)
+        self.assertNotIn("Push1TrackMoveCommand.java", patcher)
+
     def test_cursor_arrows_delegate_to_active_mode(self):
         source = (JAVA / "controller/ableton/push/command/trigger/PushCursorCommand.java").read_text(encoding="utf-8")
         left = source[source.index("protected void scrollLeft"):source.index("protected void scrollRight")]

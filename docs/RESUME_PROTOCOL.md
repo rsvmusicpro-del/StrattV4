@@ -144,3 +144,16 @@ Voir impérativement `docs/REGRESSION_POLICY.md`. La baseline matérielle est le
 - Les LED reflètent la disponibilité réelle du déplacement.
 - Tests couvrent les deux sens, les trois contextes, la suppression SELECT, les limites, les groupes et la navigation existante.
 - État matériel : NON VALIDÉ.
+
+
+### Audit de reprise — restauration du déplacement natif des pistes (2026-11-06)
+
+- Parent contrôlé : `328089255626ec39ed2f400bea32db6f4a6f7bd5` sur `evolution`.
+- Cause : `apply_push1_navigation.py` surchargeait auparavant `PushCursorCommand` et court-circuitait la délégation au mode actif ; le mode natif `AbstractTrackMode` ne recevait donc plus SHIFT + flèches.
+- Correction présente : commit `50ec514c68b3fd4bd08df69f3f9db15a1fa70225`, qui retire cette surcharge et rétablit la délégation DrivenByMoss 19.2.2.
+- Chemin natif : `PushCursorCommand` → `AbstractTrackMode.selectPrevious/NextItemPage` → `ICursorTrack.swapWithPrevious/Next` → `CursorTrackImpl` / `TrackInsertionPoint.moveTracks`.
+- Ne pas réintroduire de `Push1TrackMoveCommand` ou de patch concurrent de `PushCursorCommand`.
+- Test de garde ajouté au contrat de régression pour empêcher le pipeline transactionnel d'installer un second patch de déplacement.
+- Le dernier run CI connu avant ce point est #21 / `42265014484`, associé à `2b26d12`, et non au parent `3280892`. Contrôler le nouveau run après ce commit et enregistrer son artefact/digest.
+- Rapport utilisateur reçu : validation matérielle positive du dernier test matériel du dernier commit en date ; scénarios et SHA de l'extension testée non détaillés.
+- Baseline immuable : `v4-foundation` / `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`. Continuer exclusivement sur `evolution`.
