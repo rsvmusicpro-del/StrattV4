@@ -39,12 +39,13 @@ public final class PadMidiNoteTracker
     private static final int NOTE_COUNT = 128;
     private static final int NOTE_WORD_COUNT = NOTE_COUNT / Long.SIZE;
 
-    // Two preallocated 64-bit words represent all 128 MIDI pitches per pad.
-    // This avoids a 128-entry boolean scan for every physical pad release.
-    private final long [][] padNotes = new long [PAD_COUNT][NOTE_WORD_COUNT];
+    // Flat, preallocated storage avoids 128 nested arrays and keeps each pad's
+    // two pitch words adjacent for predictable, allocation-free note handling.
+    private final long [] padNotes = new long [PAD_COUNT * NOTE_WORD_COUNT];
     private final int [] padChannels = new int [PAD_COUNT];
     private final boolean [] activePads = new boolean [PAD_COUNT];
-    private final int [][] references = new int [CHANNEL_COUNT][NOTE_COUNT];
+    // One flat table avoids 16 nested arrays while preserving channel isolation.
+    private final int [] references = new int [CHANNEL_COUNT * NOTE_COUNT];
     private int activePadCount;
 
 
@@ -146,15 +147,17 @@ public final class PadMidiNoteTracker
         if (!isValidNote (note))
             return false;
         final int word = note >>> 6;
+        final int padNoteIndex = pad * NOTE_WORD_COUNT + word;
         final long mask = 1L << (note & 63);
-        if ((this.padNotes[pad][word] & mask) != 0)
+        if ((this.padNotes[padNoteIndex] & mask) != 0)
             return false;
 
-        this.padNotes[pad][word] |= mask;
-        final int owners = this.references[channel][note];
+        this.padNotes[padNoteIndex] |= mask;
+        final int referenceIndex = channel * NOTE_COUNT + note;
+        final int owners = this.references[referenceIndex];
         if (owners == 0)
             sender.send (channel, note, velocity);
-        this.references[channel][note] = owners + 1;
+        this.references[referenceIndex] = owners + 1;
         return true;
     }
 
@@ -175,24 +178,26 @@ public final class PadMidiNoteTracker
             return;
 
         final int channel = this.padChannels[pad];
+        final int padNoteOffset = pad * NOTE_WORD_COUNT;
         for (int word = 0; word < NOTE_WORD_COUNT; ++word)
         {
-            long activeNotes = this.padNotes[pad][word];
+            long activeNotes = this.padNotes[padNoteOffset + word];
             while (activeNotes != 0)
             {
                 final int bit = Long.numberOfTrailingZeros (activeNotes);
                 activeNotes &= activeNotes - 1;
                 final int note = (word << 6) + bit;
-                this.padNotes[pad][word] &= ~(1L << bit);
+                this.padNotes[padNoteOffset + word] &= ~(1L << bit);
 
-                final int owners = this.references[channel][note];
+                final int referenceIndex = channel * NOTE_COUNT + note;
+                final int owners = this.references[referenceIndex];
                 if (owners <= 1)
                 {
-                    this.references[channel][note] = 0;
+                    this.references[referenceIndex] = 0;
                     sender.send (channel, note, 0);
                 }
                 else
-                    this.references[channel][note] = owners - 1;
+                    this.references[referenceIndex] = owners - 1;
             }
         }
 
