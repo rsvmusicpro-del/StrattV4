@@ -36,7 +36,7 @@ class Push1TrackReorderTests(unittest.TestCase):
     def test_bitwig_backend_moves_tracks_through_insertion_points(self):
         source = (JAVA / "bitwig/framework/daw/data/CursorTrackImpl.java").read_text(encoding="utf-8")
         self.assertIn("this.track.afterTrackInsertionPoint ().moveTracks (prevTrack);", source)
-        self.assertIn("this.track.beforeTrackInsertionPoint ().moveTracks (nextTrack);")
+        self.assertIn("this.track.beforeTrackInsertionPoint ().moveTracks (nextTrack);", source)
         self.assertIn("prevTrack.selectInEditor ();", source)
         self.assertIn("nextTrack.selectInEditor ();", source)
 

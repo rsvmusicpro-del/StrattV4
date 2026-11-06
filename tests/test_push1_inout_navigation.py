@@ -34,34 +34,22 @@ class Push1InOutNavigationTests(unittest.TestCase):
                 self.assertIn(sequencer_action, source)
                 self.assertIn("public boolean canNavigate ()", source)
 
-    def test_cursor_arrows_move_tracks_one_by_one_and_eight_with_shift(self):
+    def test_cursor_arrows_delegate_track_reordering_to_active_mode(self):
         source = PUSH_CURSOR.read_text(encoding="utf-8")
         left = source[source.index("protected void scrollLeft"):source.index("protected void scrollRight")]
         right = source[source.index("protected void scrollRight"):source.index("protected ISceneBank getSceneBank")]
-        self.assertIn("Modes.BROWSER", left)
         self.assertIn("activeMode.selectPreviousItemPage ()", left)
-        self.assertIn("trackBank.selectPreviousItem ()", left)
-        self.assertIn("trackBank.selectPreviousPage ()", left)
-        self.assertIn("isShiftPressed ()", left)
-        self.assertIn("Modes.BROWSER", right)
         self.assertIn("activeMode.selectNextItemPage ()", right)
-        self.assertIn("trackBank.selectNextItem ()", right)
-        self.assertIn("trackBank.selectNextPage ()", right)
-        self.assertIn("isShiftPressed ()", right)
+        self.assertNotIn("swapWithPrevious", left + right)
+        self.assertNotIn("swapWithNext", left + right)
 
-    def test_cursor_leds_match_shifted_track_and_scene_pages(self):
+    def test_cursor_leds_follow_active_mode_shift_capabilities(self):
         source = PUSH_CURSOR.read_text(encoding="utf-8")
         update = source[source.index("protected void updateArrowStates"):]
-        for token in (
-            "trackBank.canScrollBackwards ()",
-            "trackBank.canScrollForwards ()",
-            "trackBank.canScrollPageBackwards ()",
-            "trackBank.canScrollPageForwards ()",
-            "sceneBank.canScrollPageBackwards ()",
-            "sceneBank.canScrollPageForwards ()",
-            "isShiftPressed ()",
-        ):
-            self.assertIn(token, update)
+        self.assertIn("final IMode mode = this.surface.getModeManager ().getActive ();", update)
+        self.assertIn("final boolean shiftPressed = this.surface.isShiftPressed ();", update)
+        self.assertIn("shiftPressed ? mode.hasPreviousItem () : mode.hasPreviousItemPage ()", update)
+        self.assertIn("shiftPressed ? mode.hasNextItem () : mode.hasNextItemPage ()", update)
 
     def test_device_mode_context_is_declared_once(self):
         source = CONTEXT.read_text(encoding="utf-8")
