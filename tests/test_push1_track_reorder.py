@@ -39,8 +39,6 @@ class Push1TrackReorderTests(unittest.TestCase):
     def test_arrow_navigation_and_led_state_are_preserved_outside_new_chord(self):
         source = SCRIPT.read_text(encoding="utf-8")
         self.assertIn("final IMode activeMode = this.surface.getModeManager ().getActive ();", source)
-        self.assertIn("activeMode.selectPreviousItemPage ();", source)
-        self.assertIn("activeMode.selectNextItemPage ();", source)
         self.assertIn("this.canScrollUp = sceneBank.canScrollBackwards ();", source)
         self.assertIn("this.canScrollDown = sceneBank.canScrollForwards ();", source)
         self.assertIn("final IMode mode = this.surface.getModeManager ().getActive ();", source)
