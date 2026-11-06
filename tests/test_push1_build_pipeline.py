@@ -107,7 +107,6 @@ class Push1BuildPipelineTests(unittest.TestCase):
             "apply_push1_note_sequencer_lifecycle.py",
             "apply_push1_modifier_gestures.py",
             "apply_push1_note_edit_touch_owner.py",
-            "apply_push1_note_edit_touch_owner.py",
             "apply_push1_navigation.py",
             "apply_push1_french.py",
             "apply_push1_startup_message.py",
