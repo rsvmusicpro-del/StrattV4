@@ -1,5 +1,19 @@
 # StrattV4 — point de sauvegarde et état de non-régression
 
+## Sauvegarde de référence la plus récente — 2026-11-06
+
+- Commit : `5978d89e4deeacb93f415111511d2fdf98763041` — [StrattV4 backup](https://github.com/rsvmusicpro-del/StrattV4/commit/5978d89e4deeacb93f415111511d2fdf98763041).
+- Branches `evolution` et `v4-foundation` positionnées sur ce même commit après la sauvegarde ; arbre identique `3222a047e110c37a63161169ebf0979ecdb02e6a`.
+- Le commit est un snapshot sans changement de fichier par rapport au HEAD source `b08d03ec0e39187e5f200f14f051ce3eb0e82550` ; l'ancien baseline `ec5871a` est conservé comme parent historique.
+- Le propriétaire confirme un test matériel positif sur Push 1 avec Bitwig le 2026-11-06. Cette déclaration est enregistrée comme validation utilisateur ; la matrice détaillée des scénarios et le SHA du binaire testé ne sont pas indépendamment documentés.
+- Aucun build CI n'est associé à `b08d03e` ni au commit de sauvegarde. Le dernier build CI vérifié reste le run `42265014484` (#21), succès sur `2b26d1203e8c3923a27df0a1b1f95d83235c9e7d`, artefact `13526433106`, digest `sha256:2d9f70c125e5a9d407ced37a66753f80c259a198de24bcb8f1a23703cb258dd4`. Ce build précède de 22 commits le HEAD source sauvegardé et ne constitue pas une preuve de compilation du snapshot.
+
+La sauvegarde prouve l'identité de l'arbre Git avant/après le commit de sauvegarde ; elle ne constitue pas une preuve de build ni une validation indépendante du matériel.
+
+---
+
+# StrattV4 — point de sauvegarde et état de non-régression
+
 Date : 2026-11-06
 Branche de travail : `evolution`
 Baseline immuable : `v4-foundation` — `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`
