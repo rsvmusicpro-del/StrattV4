@@ -1,0 +1,3 @@
+[submodule "vendor/DrivenByMoss"]
+	path = vendor/DrivenByMoss
+	url = https://github.com/git-moss/DrivenByMoss.git
