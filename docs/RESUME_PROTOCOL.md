@@ -130,3 +130,17 @@ Voir impérativement `docs/REGRESSION_POLICY.md`. La baseline matérielle est le
 - Correction préparée : limiter le geste à Session + SELECT sans SHIFT ; exiger un curseur existant, de premier niveau et un voisin disponible ; faire correspondre les LED à ces mêmes conditions.
 - Tests renforcés : vérification des deux directions, du contexte, de SHIFT, de la hiérarchie parent/enfant, des limites et de la conservation de la navigation normale.
 - État matériel : NON VALIDÉ jusqu'à un nouvel essai sur Push 1 / Bitwig Studio 4.3.10.
+
+
+### Reprise — affectation SHIFT + flèches après échec matériel
+
+- HEAD initial : `e08055f3d835cec71e99f930b6f0021951927b71` sur `evolution`.
+- Échec matériel : SELECT + LEFT/RIGHT rejeté par le propriétaire.
+- Nouvelle affectation : SHIFT + LEFT/RIGHT pour déplacer le top-level track/group d'un rang.
+- Contextes : Session, Track et Volume ; pas de restriction Session seule.
+- SELECT + flèches supprimé.
+- Cursor track global Bitwig, vérification existence/voisin/niveau supérieur.
+- Les pistes enfants sont protégées car l'API globale ne prouve pas un déplacement sûr dans les limites d'un groupe.
+- Les LED reflètent la disponibilité réelle du déplacement.
+- Tests couvrent les deux sens, les trois contextes, la suppression SELECT, les limites, les groupes et la navigation existante.
+- État matériel : NON VALIDÉ.

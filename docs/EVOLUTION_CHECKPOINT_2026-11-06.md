@@ -68,3 +68,8 @@ Le propriétaire du projet confirme que le dernier commit et son build de test o
 - Digest : `sha256:c91b9fc200e6fbc02a2d8519599c7e934e9661dfb1457f224297dc72610c68b5`.
 - La validation matérielle est une déclaration explicite du propriétaire du projet datée du 2026-11-06.
 - La branche `v4-foundation` reste inchangée : `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`.
+
+
+## Réaffectation après échec matériel
+
+Le geste SELECT + flèches du commit e08055f3d835cec71e99f930b6f0021951927b71 est rejeté matériellement. Nouveau geste : SHIFT+LEFT déplace le top-level track/group vers la gauche ; SHIFT+RIGHT vers la droite, dans Session, Track et Volume. SELECT+LEFT/RIGHT ne doit plus déplacer les pistes. Les pistes enfants restent protégées par l'API globale d'insertion. Validation matérielle en attente.

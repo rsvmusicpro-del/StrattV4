@@ -1,78 +1,57 @@
 #!/usr/bin/env python3
-"""Regression checks for the Push 1 track/group reorder gesture."""
+"""Regression checks for Shift+arrow Push 1 track/group reordering."""
 from pathlib import Path
 import unittest
-
 ROOT = Path(__file__).resolve().parents[1]
 JAVA = ROOT / "vendor/DrivenByMoss/src/main/java/de/mossgrabers"
 
-
 class Push1TrackReorderTests(unittest.TestCase):
-    def test_select_arrows_are_limited_to_session_view_without_shift(self):
-        source = (JAVA / "controller/ableton/push/command/trigger/PushCursorCommand.java").read_text(encoding="utf-8")
-        left = source[source.index("protected void scrollLeft"):source.index("protected void scrollRight")]
-        right = source[source.index("protected void scrollRight"):source.index("protected ISceneBank getSceneBank")]
-        gesture = (
-            "this.surface.isSelectPressed () && !this.surface.isShiftPressed () "
-            "&& this.surface.getViewManager ().isActive (Views.SESSION)"
-        )
-        self.assertIn(gesture, left)
-        self.assertIn(gesture, right)
-        self.assertNotIn("Modes.TRACK", left)
-        self.assertNotIn("Modes.TRACK", right)
+    def sections(self):
+        source=(JAVA/"controller/ableton/push/command/trigger/PushCursorCommand.java").read_text(encoding="utf-8")
+        left=source[source.index("protected void scrollLeft"):source.index("protected void scrollRight")]
+        right=source[source.index("protected void scrollRight"):source.index("protected ISceneBank getSceneBank")]
+        return source,left,right
 
-    def test_both_directions_require_an_existing_top_level_cursor_track(self):
-        source = (JAVA / "controller/ableton/push/command/trigger/PushCursorCommand.java").read_text(encoding="utf-8")
-        left = source[source.index("protected void scrollLeft"):source.index("protected void scrollRight")]
-        right = source[source.index("protected void scrollRight"):source.index("protected ISceneBank getSceneBank")]
-        for section, direction in ((left, "Previous"), (right, "Next")):
-            with self.subTest(direction=direction):
-                self.assertIn("cursorTrack != null", section)
-                self.assertIn("cursorTrack.doesExist ()", section)
-                self.assertIn("!cursorTrack.hasParent ()", section)
-                self.assertIn(f"cursorTrack.canSelect{direction} ()", section)
-                self.assertIn(f"cursorTrack.swapWith{direction} ()", section)
+    def test_shift_arrows_are_the_only_reorder_gesture(self):
+        _,left,right=self.sections()
+        for part in (left,right):
+            self.assertIn("this.surface.isShiftPressed () && this.isTrackReorderContext ()",part)
+            self.assertNotIn("isSelectPressed",part)
+            self.assertNotIn("Views.SESSION",part)
+        self.assertIn("cursorTrack.swapWithPrevious ()",left)
+        self.assertIn("cursorTrack.swapWithNext ()",right)
 
-    def test_arrow_leds_use_the_same_session_select_gesture_and_parent_guard(self):
-        source = (JAVA / "controller/ableton/push/command/trigger/PushCursorCommand.java").read_text(encoding="utf-8")
-        update = source[source.index("protected void updateArrowStates"):]
-        self.assertIn("!this.surface.isShiftPressed ()", update)
-        self.assertIn("this.surface.getViewManager ().isActive (Views.SESSION)", update)
-        self.assertIn("!cursorTrack.hasParent ()", update)
-        self.assertIn("this.canScrollLeft = canMove && cursorTrack.canSelectPrevious ();", update)
-        self.assertIn("this.canScrollRight = canMove && cursorTrack.canSelectNext ();", update)
+    def test_session_track_and_volume_contexts(self):
+        source,_,_=self.sections()
+        start=source.index("private boolean isTrackReorderContext ()")
+        end=source.index("private boolean isScenePlay ()",start)
+        context=source[start:end]
+        for token in ("Views.SESSION","Modes.TRACK","Modes.VOLUME"): self.assertIn(token,context)
 
-    def test_normal_and_shift_track_navigation_are_preserved(self):
-        source = (JAVA / "controller/ableton/push/command/trigger/PushCursorCommand.java").read_text(encoding="utf-8")
-        for token in (
-            "trackBank.selectPreviousItem ()",
-            "trackBank.selectNextItem ()",
-            "trackBank.selectPreviousPage ()",
-            "trackBank.selectNextPage ()",
-        ):
-            self.assertIn(token, source)
+    def test_both_directions_check_existence_parent_and_boundary(self):
+        _,left,right=self.sections()
+        for part,direction in ((left,"Previous"),(right,"Next")):
+            for token in ("cursorTrack != null","cursorTrack.doesExist ()","!cursorTrack.hasParent ()",f"cursorTrack.canSelect{direction} ()",f"cursorTrack.swapWith{direction} ()"):
+                self.assertIn(token,part)
 
-    def test_cursor_track_moves_tracks_using_bitwig_insertion_points(self):
-        source = (JAVA / "bitwig/framework/daw/data/CursorTrackImpl.java").read_text(encoding="utf-8")
-        self.assertIn("this.track.afterTrackInsertionPoint ().moveTracks (prevTrack);", source)
-        self.assertIn("this.track.beforeTrackInsertionPoint ().moveTracks (nextTrack);", source)
-        self.assertIn("prevTrack.selectInEditor ();", source)
-        self.assertIn("nextTrack.selectInEditor ();", source)
+    def test_leds_follow_shift_move_availability(self):
+        source,_,_=self.sections(); update=source[source.index("protected void updateArrowStates"):]
+        for token in ("shiftPressed && this.isTrackReorderContext ()","!cursorTrack.hasParent ()","this.canScrollLeft = canMove && cursorTrack.canSelectPrevious ();","this.canScrollRight = canMove && cursorTrack.canSelectNext ();"):
+            self.assertIn(token,update)
 
-    def test_group_tracks_share_the_track_object_move_path(self):
-        track = (JAVA / "bitwig/framework/daw/data/TrackImpl.java").read_text(encoding="utf-8")
-        cursor = (JAVA / "bitwig/framework/daw/data/CursorTrackImpl.java").read_text(encoding="utf-8")
-        self.assertIn("public class TrackImpl extends ChannelImpl implements ITrack", track)
-        self.assertIn("public boolean isGroup ()", track)
-        self.assertIn("public void swapWithPrevious ()", cursor)
-        self.assertIn("public void swapWithNext ()", cursor)
+    def test_unmodified_navigation_and_browser_remain(self):
+        _,left,right=self.sections()
+        for token in ("Modes.BROWSER","activeMode.selectPreviousItemPage ()","trackBank.selectPreviousItem ()","trackBank.selectPreviousPage ()"): self.assertIn(token,left)
+        for token in ("Modes.BROWSER","activeMode.selectNextItemPage ()","trackBank.selectNextItem ()","trackBank.selectNextPage ()"): self.assertIn(token,right)
 
-    def test_page_buttons_are_not_used_as_track_move_controls(self):
-        left = (JAVA / "controller/ableton/push/command/trigger/PageLeftCommand.java").read_text(encoding="utf-8")
-        right = (JAVA / "controller/ableton/push/command/trigger/PageRightCommand.java").read_text(encoding="utf-8")
-        self.assertNotIn("swapWithPrevious", left)
-        self.assertNotIn("swapWithNext", right)
+    def test_bitwig_insertion_api_and_group_track_type_remain(self):
+        cursor=(JAVA/"bitwig/framework/daw/data/CursorTrackImpl.java").read_text(encoding="utf-8")
+        track=(JAVA/"bitwig/framework/daw/data/TrackImpl.java").read_text(encoding="utf-8")
+        for token in ("this.track.afterTrackInsertionPoint ().moveTracks (prevTrack);","this.track.beforeTrackInsertionPoint ().moveTracks (nextTrack);","prevTrack.selectInEditor ();","nextTrack.selectInEditor ();"): self.assertIn(token,cursor)
+        self.assertIn("public boolean isGroup ()",track)
 
+    def test_page_commands_do_not_move_tracks(self):
+        for name,method in (("PageLeftCommand.java","swapWithPrevious"),("PageRightCommand.java","swapWithNext")):
+            self.assertNotIn(method,(JAVA/"controller/ableton/push/command/trigger"/name).read_text(encoding="utf-8"))
 
-if __name__ == "__main__":
-    unittest.main()
+if __name__=="__main__": unittest.main()

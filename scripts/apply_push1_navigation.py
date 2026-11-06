@@ -195,8 +195,8 @@ def patch_page_command(command_name: str, direction: str) -> None:
     path.write_text(source, encoding="utf-8")
 
 
-# The physical arrow keys navigate tracks one at a time; In/Out (Page Left/Right)
-# remain dedicated to bank/page navigation. Browser arrows retain content-type navigation.
+# SHIFT + cursor arrows reorder the selected top-level track/group in Session,
+# Track and Volume contexts. SELECT is deliberately not assigned.
 cursor_path = ROOT / "controller/ableton/push/command/trigger/PushCursorCommand.java"
 cursor = cursor_path.read_text(encoding="utf-8")
 cursor = replace_once(
@@ -228,7 +228,7 @@ cursor = replace_once(
             return;
         }
 
-        if (this.surface.isSelectPressed () && !this.surface.isShiftPressed () && this.surface.getViewManager ().isActive (Views.SESSION))
+        if (this.surface.isShiftPressed () && this.isTrackReorderContext ())
         {
             final ICursorTrack cursorTrack = this.model.getCursorTrack ();
             if (cursorTrack != null && cursorTrack.doesExist () && !cursorTrack.hasParent () && cursorTrack.canSelectPrevious ())
@@ -266,7 +266,7 @@ cursor = replace_once(
             return;
         }
 
-        if (this.surface.isSelectPressed () && !this.surface.isShiftPressed () && this.surface.getViewManager ().isActive (Views.SESSION))
+        if (this.surface.isShiftPressed () && this.isTrackReorderContext ())
         {
             final ICursorTrack cursorTrack = this.model.getCursorTrack ();
             if (cursorTrack != null && cursorTrack.doesExist () && !cursorTrack.hasParent () && cursorTrack.canSelectNext ())
@@ -297,7 +297,7 @@ cursor = replace_once(
             this.canScrollLeft = mode != null && mode.hasPreviousItemPage ();
             this.canScrollRight = mode != null && mode.hasNextItemPage ();
         }
-        else if (this.surface.isSelectPressed () && !this.surface.isShiftPressed () && this.surface.getViewManager ().isActive (Views.SESSION))
+        else if (this.surface.isShiftPressed () && this.isTrackReorderContext ())
         {
             final ICursorTrack cursorTrack = this.model.getCursorTrack ();
             final boolean canMove = cursorTrack != null && cursorTrack.doesExist () && !cursorTrack.hasParent ();
@@ -316,6 +316,18 @@ cursor = replace_once(
         this.canScrollDown = scenePageNavigation ? sceneBank.canScrollPageForwards () : sceneBank.canScrollForwards ();
 """,
     "Push arrow LED states reflect track or Browser action",
+)
+cursor = replace_once(
+    cursor,
+    "    private boolean isScenePlay ()",
+    "    private boolean isTrackReorderContext ()\n"
+    "    {\n"
+    "        return this.surface.getViewManager ().isActive (Views.SESSION)\n"
+    "            || this.surface.getModeManager ().isActive (Modes.TRACK)\n"
+    "            || this.surface.getModeManager ().isActive (Modes.VOLUME);\n"
+    "    }\n\n\n"
+    "    private boolean isScenePlay ()",
+    "PushCursorCommand Session/Track/Volume reorder contexts",
 )
 cursor_path.write_text(cursor, encoding="utf-8")
 
@@ -899,8 +911,14 @@ for token in (
         raise SystemExit(f"PushCursorCommand: missing arrow navigation postcondition {token}")
 if "activeMode.selectPreviousItemPage ()" not in cursor or "activeMode.selectNextItemPage ()" not in cursor:
     raise SystemExit("PushCursorCommand: Browser content-type navigation was not preserved")
-if "isShiftPressed" not in cursor[cursor.index("protected void updateArrowStates"):]:
-    raise SystemExit("PushCursorCommand: arrow LED state does not reflect Shift page navigation")
+if "this.surface.isShiftPressed () && this.isTrackReorderContext ()" not in cursor:
+    raise SystemExit("PushCursorCommand: Shift+arrow track move gesture is missing")
+if "private boolean isTrackReorderContext ()" not in cursor or "Modes.TRACK" not in cursor or "Modes.VOLUME" not in cursor:
+    raise SystemExit("PushCursorCommand: Session/Track/Volume contexts are not all supported")
+left = cursor[cursor.index("protected void scrollLeft"):cursor.index("protected void scrollRight")]
+right = cursor[cursor.index("protected void scrollRight"):cursor.index("protected ISceneBank getSceneBank")]
+if "isSelectPressed" in left or "isSelectPressed" in right:
+    raise SystemExit("PushCursorCommand: obsolete SELECT track-reorder assignment remains")
 
 if not context_path.is_file() or "static boolean isDeviceNavigationMode" not in context_path.read_text(encoding="utf-8"):
     raise SystemExit("Push1NavigationContext: shared Device mode helper is missing")
