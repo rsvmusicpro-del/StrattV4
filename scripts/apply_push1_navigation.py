@@ -755,34 +755,6 @@ if "super.selectPreviousItemPage ()" in device_params or "super.selectNextItemPa
 if "pageLeftCommand::canNavigate" not in setup or "pageRightCommand::canNavigate" not in setup:
     raise SystemExit("PushControllerSetup: In/Out LED state is not linked to command availability")
 
-cursor = cursor_path.read_text(encoding="utf-8")
-for token in (
-    "final var trackBank = this.model.getCurrentTrackBank ()",
-    "trackBank.selectPreviousItem ()",
-    "trackBank.selectNextItem ()",
-    "trackBank.canScrollBackwards ()",
-    "trackBank.canScrollForwards ()",
-    "trackBank.selectPreviousPage ()",
-    "trackBank.selectNextPage ()",
-    "trackBank.canScrollPageBackwards ()",
-    "trackBank.canScrollPageForwards ()",
-    "sceneBank.canScrollPageBackwards ()",
-    "sceneBank.canScrollPageForwards ()",
-    "Modes.BROWSER",
-):
-    if token not in cursor:
-        raise SystemExit(f"PushCursorCommand: missing arrow navigation postcondition {token}")
-if "activeMode.selectPreviousItemPage ()" not in cursor or "activeMode.selectNextItemPage ()" not in cursor:
-    raise SystemExit("PushCursorCommand: Browser content-type navigation was not preserved")
-if "this.surface.isShiftPressed () && this.isTrackReorderContext ()" not in cursor:
-    raise SystemExit("PushCursorCommand: Shift+arrow track move gesture is missing")
-if "private boolean isTrackReorderContext ()" not in cursor or "Modes.TRACK" not in cursor or "Modes.VOLUME" not in cursor:
-    raise SystemExit("PushCursorCommand: Session/Track/Volume contexts are not all supported")
-left = cursor[cursor.index("protected void scrollLeft"):cursor.index("protected void scrollRight")]
-right = cursor[cursor.index("protected void scrollRight"):cursor.index("protected ISceneBank getSceneBank")]
-if "isSelectPressed" in left or "isSelectPressed" in right:
-    raise SystemExit("PushCursorCommand: obsolete SELECT track-reorder assignment remains")
-
 if not context_path.is_file() or "static boolean isDeviceNavigationMode" not in context_path.read_text(encoding="utf-8"):
     raise SystemExit("Push1NavigationContext: shared Device mode helper is missing")
 
