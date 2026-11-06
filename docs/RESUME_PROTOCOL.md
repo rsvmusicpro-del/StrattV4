@@ -7,8 +7,8 @@
 - Dépôt : `rsvmusicpro-del/StrattV4`
 - Branche de travail unique : `evolution`
 - Branche baseline immuable : `v4-foundation` (ne jamais modifier)
-- Commit baseline validé : `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`
-- Build baseline : `Build StrattV4 Push 1` #3 — run `42248099882`
+- Commit baseline validé : `5978d89e4deeacb93f415111511d2fdf98763041`
+- Build associé au snapshot courant : non disponible à ce stade. Dernier build CI vérifié : run `42265014484` (#21), commit `2b26d1203e8c3923a27df0a1b1f95d83235c9e7d`, artefact `13526433106`, digest `sha256:2d9f70c125e5a9d407ced37a66753f80c259a198de24bcb8f1a23703cb258dd4` (22 commits avant le snapshot)
 - Politique anti-régression : `docs/REGRESSION_POLICY.md`
 - Cible : Ableton Push 1 et Bitwig Studio 4.3.10
 - Java : 17
@@ -25,8 +25,8 @@
 6. Ne pas déclarer une validation matérielle sur la seule base d'un build CI.
 7. Ne pas réécrire l'historique, force-push ou supprimer de branche.
 8. Tout changement fonctionnel doit être accompagné d'un test de non-régression et d'un compte rendu.
-9. La baseline `v4-foundation` / `ec5871a` est intouchable. Toutes les évolutions se font exclusivement sur `evolution`.
-10. Aucun comportement du build #3 validé ne peut être supprimé ou dégradé. Lire `docs/REGRESSION_POLICY.md` avant chaque changement.
+9. La baseline actuelle `v4-foundation` / `5978d89e4deeacb93f415111511d2fdf98763041` est désormais le snapshot de référence immuable. Le commit historique `ec5871a` reste conservé dans son ascendance. Toutes les évolutions se font exclusivement sur `evolution`.
+10. Aucun comportement du snapshot source sauvegardé sous `5978d89` et déclaré validé matériellement par le propriétaire ne peut être supprimé ou dégradé. Lire `docs/REGRESSION_POLICY.md` avant chaque changement.
 
 ## Procédure de reprise
 
@@ -34,7 +34,7 @@ Au début de chaque session :
 
 1. Lire intégralement ce document, le README et `docs/REGRESSION_POLICY.md`.
 2. Vérifier que la branche active est `evolution`. Toute autre branche est en lecture seule, notamment `v4-foundation`.
-3. Comparer le HEAD de `evolution` à la baseline `ec5871aed16ae1fe8a40ec27943f5561b5b7b168` et expliquer chaque différence.
+3. Comparer le HEAD de `evolution` à la baseline `5978d89e4deeacb93f415111511d2fdf98763041` et expliquer chaque différence.
 4. Lire l'état GitHub du dépôt et relever la branche active et son SHA.
 5. Vérifier la présence du sous-module et sa révision exacte.
 6. Lire les derniers commits, PR, workflows, résultats de tests et artefacts.
@@ -170,3 +170,12 @@ Voir impérativement `docs/REGRESSION_POLICY.md`. La baseline matérielle est le
 - Correction StrattV4 : \`scripts/apply_push1_track_reorder.py\` remplace la banque globale par \`CursorTrack.createSiblingsTrackBank(400, 0, 0, false, false)\` et résout le voisin via \`TrackBank.cursorIndex()\`. Le geste SHIFT + flèches et le routage natif sont conservés.
 - Contrôler les tests, Maven, l'enregistrement Push 1, le contenu du JAR, le digest du nouvel artefact et la comparaison avec baseline + parent.
 - Essai matériel obligatoire sur pistes racines, groupes repliés/dépliés, pistes enfants, limites et répétition des commandes. Jusqu'à confirmation, statut NON VALIDÉ.
+
+
+## Dernière reprise — sauvegarde StrattV4 backup (2026-11-06)
+
+- Commit de sauvegarde : `5978d89e4deeacb93f415111511d2fdf98763041`.
+- Les branches `evolution` et `v4-foundation` ont été alignées sur ce commit ; arbre Git `3222a047e110c37a63161169ebf0979ecdb02e6a` identique au HEAD source antérieur `b08d03e`.
+- Le propriétaire déclare le test matériel Push 1 + Bitwig positif. Le détail des scénarios et le SHA du binaire testé ne sont pas indépendamment établis.
+- Aucun run CI n'est associé au HEAD sauvegardé ; ne pas présenter le run #21 comme build de cette version.
+- La baseline initiale `ec5871a` reste présente dans l'historique et dans les anciens points de sauvegarde.
