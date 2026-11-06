@@ -177,5 +177,8 @@ Voir impérativement `docs/REGRESSION_POLICY.md`. La baseline matérielle est le
 - Commit de sauvegarde : `5978d89e4deeacb93f415111511d2fdf98763041`.
 - Les branches `evolution` et `v4-foundation` ont été alignées sur ce commit ; arbre Git `3222a047e110c37a63161169ebf0979ecdb02e6a` identique au HEAD source antérieur `b08d03e`.
 - Le propriétaire déclare le test matériel Push 1 + Bitwig positif. Le détail des scénarios et le SHA du binaire testé ne sont pas indépendamment établis.
-- Aucun run CI n'est associé au HEAD sauvegardé ; ne pas présenter le run #21 comme build de cette version.
+- Build CI exact : run `42287559330` (#43), succès sur le SHA `5978d89e4deeacb93f415111511d2fdf98763041`.
+- Artefact `StrattV4-Push1-Test`, ID `13538012774`, SHA-256 `24a4bc45be4505903aabd9ab14e56209585ff3dd08c5e1e00b6522db00003600`.
+- Tests Java MIDI, suite Python, Maven, service Push 1 et intégrité ZIP : toutes les étapes réussies.
+- Le run #21 n'est pas le build du snapshot ; utiliser le run #43.
 - La baseline initiale `ec5871a` reste présente dans l'historique et dans les anciens points de sauvegarde.
