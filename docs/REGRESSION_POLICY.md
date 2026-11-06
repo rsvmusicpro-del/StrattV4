@@ -94,6 +94,6 @@ Les checks obligatoires pour toute évolution sont : tests Java, tests Python, c
 - Baseline courante : `5978d89e4deeacb93f415111511d2fdf98763041` (`StrattV4 backup`).
 - Arbre source : `3222a047e110c37a63161169ebf0979ecdb02e6a`, identique au HEAD antérieur `b08d03ec0e39187e5f200f14f051ce3eb0e82550`.
 - Les branches `evolution` et `v4-foundation` ont été positionnées sur ce snapshot ; `ec5871a` reste conservé comme parent historique.
-- Le dernier build CI vérifié est run `42265014484` (#21), succès sur `2b26d1203e8c3923a27df0a1b1b5?`; ce SHA n'est pas celui du snapshot.
+- Le dernier build CI vérifié est run `42265014484` (#21), succès sur `2b26d1203e8c3923a27df0a1b1f95d83235c9e7d`; ce SHA n'est pas celui du snapshot.
 - Aucune validation CI du snapshot n'est disponible dans l'historique consulté. Un nouveau run doit être associé au SHA exact avant livraison.
 - Les métadonnées GitHub ont signalé `protected: false` lors de l'audit ; la lecture détaillée des règles a été refusée à l'intégration. Ne pas prétendre que la protection est active.
