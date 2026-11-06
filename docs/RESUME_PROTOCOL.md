@@ -118,3 +118,15 @@ Voir impérativement `docs/REGRESSION_POLICY.md`. La baseline matérielle est le
 - Artefact : `StrattV4-Push1-Test`, ID `13523784316`, digest `sha256:c91b9fc200e6fbc02a2d8519599c7e934e9661dfb1457f224297dc72610c68b5`.
 - Baseline immuable : `v4-foundation` — `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`.
 - Cette validation ne remplace pas les contrôles automatisés du prochain commit ni sa propre recette matérielle.
+
+
+### Reprise à froid — correction du réordonnancement des pistes (2026-11-06)
+
+- HEAD examiné avant correction : `3ab70978e6d58f54a613dd4d75a353e39ea62bbf`.
+- Dernier commit matériellement validé déclaré : `098443b6197539beced6536d223d89e1c44e3ed7`.
+- Baseline immuable : `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`.
+- Échec signalé : SELECT + flèches ne déplaçait pas la piste ou le Group Track attendu.
+- Cause identifiée dans le patch généré de `PushCursorCommand` : la condition avait dérivé de la vue Session vers `Modes.TRACK`, avait perdu l'exclusion de SHIFT et la protection `!cursorTrack.hasParent()` de la conception initiale.
+- Correction préparée : limiter le geste à Session + SELECT sans SHIFT ; exiger un curseur existant, de premier niveau et un voisin disponible ; faire correspondre les LED à ces mêmes conditions.
+- Tests renforcés : vérification des deux directions, du contexte, de SHIFT, de la hiérarchie parent/enfant, des limites et de la conservation de la navigation normale.
+- État matériel : NON VALIDÉ jusqu'à un nouvel essai sur Push 1 / Bitwig Studio 4.3.10.

@@ -228,10 +228,10 @@ cursor = replace_once(
             return;
         }
 
-        if (this.surface.isSelectPressed () && this.surface.getModeManager ().isActive (Modes.TRACK))
+        if (this.surface.isSelectPressed () && !this.surface.isShiftPressed () && this.surface.getViewManager ().isActive (Views.SESSION))
         {
             final ICursorTrack cursorTrack = this.model.getCursorTrack ();
-            if (cursorTrack.canSelectPrevious ())
+            if (cursorTrack != null && cursorTrack.doesExist () && !cursorTrack.hasParent () && cursorTrack.canSelectPrevious ())
                 cursorTrack.swapWithPrevious ();
             return;
         }
@@ -266,10 +266,10 @@ cursor = replace_once(
             return;
         }
 
-        if (this.surface.isSelectPressed () && this.surface.getModeManager ().isActive (Modes.TRACK))
+        if (this.surface.isSelectPressed () && !this.surface.isShiftPressed () && this.surface.getViewManager ().isActive (Views.SESSION))
         {
             final ICursorTrack cursorTrack = this.model.getCursorTrack ();
-            if (cursorTrack.canSelectNext ())
+            if (cursorTrack != null && cursorTrack.doesExist () && !cursorTrack.hasParent () && cursorTrack.canSelectNext ())
                 cursorTrack.swapWithNext ();
             return;
         }
@@ -297,11 +297,12 @@ cursor = replace_once(
             this.canScrollLeft = mode != null && mode.hasPreviousItemPage ();
             this.canScrollRight = mode != null && mode.hasNextItemPage ();
         }
-        else if (this.surface.isSelectPressed () && this.surface.getModeManager ().isActive (Modes.TRACK))
+        else if (this.surface.isSelectPressed () && !this.surface.isShiftPressed () && this.surface.getViewManager ().isActive (Views.SESSION))
         {
             final ICursorTrack cursorTrack = this.model.getCursorTrack ();
-            this.canScrollLeft = cursorTrack.canSelectPrevious ();
-            this.canScrollRight = cursorTrack.canSelectNext ();
+            final boolean canMove = cursorTrack != null && cursorTrack.doesExist () && !cursorTrack.hasParent ();
+            this.canScrollLeft = canMove && cursorTrack.canSelectPrevious ();
+            this.canScrollRight = canMove && cursorTrack.canSelectNext ();
         }
         else
         {
