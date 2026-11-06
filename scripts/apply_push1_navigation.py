@@ -202,6 +202,7 @@ cursor = cursor_path.read_text(encoding="utf-8")
 cursor = replace_once(
     cursor,
     "import de.mossgrabers.framework.view.Views;\n",
+    "import de.mossgrabers.framework.daw.data.ICursorTrack;\n"
     "import de.mossgrabers.framework.mode.Modes;\n"
     "import de.mossgrabers.framework.view.Views;\n",
     "PushCursorCommand Browser mode import",
@@ -224,6 +225,14 @@ cursor = replace_once(
             final IMode activeMode = this.surface.getModeManager ().getActive ();
             if (activeMode != null)
                 activeMode.selectPreviousItemPage ();
+            return;
+        }
+
+        if (this.surface.isSelectPressed () && this.surface.getModeManager ().isActive (Modes.TRACK))
+        {
+            final ICursorTrack cursorTrack = this.model.getCursorTrack ();
+            if (cursorTrack.canSelectPrevious ())
+                cursorTrack.swapWithPrevious ();
             return;
         }
 
@@ -257,6 +266,14 @@ cursor = replace_once(
             return;
         }
 
+        if (this.surface.isSelectPressed () && this.surface.getModeManager ().isActive (Modes.TRACK))
+        {
+            final ICursorTrack cursorTrack = this.model.getCursorTrack ();
+            if (cursorTrack.canSelectNext ())
+                cursorTrack.swapWithNext ();
+            return;
+        }
+
         final var trackBank = this.model.getCurrentTrackBank ();
         if (this.surface.isShiftPressed ())
             trackBank.selectNextPage ();
@@ -279,6 +296,12 @@ cursor = replace_once(
         {
             this.canScrollLeft = mode != null && mode.hasPreviousItemPage ();
             this.canScrollRight = mode != null && mode.hasNextItemPage ();
+        }
+        else if (this.surface.isSelectPressed () && this.surface.getModeManager ().isActive (Modes.TRACK))
+        {
+            final ICursorTrack cursorTrack = this.model.getCursorTrack ();
+            this.canScrollLeft = cursorTrack.canSelectPrevious ();
+            this.canScrollRight = cursorTrack.canSelectNext ();
         }
         else
         {

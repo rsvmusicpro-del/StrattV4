@@ -1,36 +1,35 @@
-# Déplacer une piste ou un Group Track avec Push 1
+# Push 1 track and group-track move
 
-## Geste disponible dans StrattV4
+## Gesture
 
-1. Passer en mode **Track** sur le Push 1.
-2. Sélectionner la piste à déplacer avec les boutons de sélection de piste sous l'écran.
-3. Maintenir **SHIFT** et presser la flèche **LEFT** pour déplacer la piste d'une position vers la gauche.
-4. Maintenir **SHIFT** et presser la flèche **RIGHT** pour la déplacer d'une position vers la droite.
+1. Enter Track mode.
+2. Select the track or group track.
+3. Hold SELECT and press LEFT to move it one position left.
+4. Hold SELECT and press RIGHT to move it one position right.
 
-Le geste utilise le curseur de piste Bitwig : `ICursorTrack.swapWithPrevious()` / `swapWithNext()`. Le contrôleur DrivenByMoss le réalise avec les points d'insertion de piste Bitwig (`afterTrackInsertionPoint()` / `beforeTrackInsertionPoint()`) puis resélectionne la piste déplacée.
+The command checks that a previous or next track exists, then calls the cursor-track swap API. The Bitwig adapter performs the move through the track insertion points and keeps the moved track selected.
 
-Un Group Track est un objet `Track` sélectionnable comme les autres pistes. Il passe par la même opération de déplacement ; la conservation de toute sa hiérarchie d'enfants doit néanmoins être confirmée sur le matériel et dans la version Bitwig cible.
+Group tracks use the same Bitwig Track object path. Verify on hardware that all child tracks remain inside the group and keep their order.
 
-## Commandes préservées
+## Preserved controls
 
-- **LEFT / RIGHT sans SHIFT** : navigation de page existante.
-- **IN / OUT (PAGE LEFT / PAGE RIGHT)** : restent dédiés à leur navigation existante ; ils ne sont pas détournés pour déplacer des pistes.
-- Aucun mapping central PushControllerSetup ni identifiant MIDI n'est remplacé pour cette fonction.
+- LEFT/RIGHT without SELECT or SHIFT: existing one-track navigation.
+- SHIFT + LEFT/RIGHT: existing eight-track page navigation.
+- SELECT + LEFT/RIGHT in Track mode: move the selected track by one position.
+- IN/OUT (PAGE LEFT/PAGE RIGHT): existing Browser, Device, Rack and sequencer navigation; not repurposed.
+- The new gesture is limited to Track mode and does not replace central MIDI mappings.
 
-Le chemin est déjà présent dans la révision DrivenByMoss épinglée par le projet : `PushCursorCommand` délègue aux méthodes de page du mode actif, et `AbstractTrackMode` transforme ces méthodes en déplacement de piste lorsque SHIFT est maintenu.
+## Ableton Live 10 distinction
 
-## Précision sur Ableton Live 10
+This is not claimed as a native Ableton Live 10 command. Ableton's Push documentation describes SHIFT + LEFT/RIGHT in Session as moving the eight-track window, not reordering tracks. StrattV4 adds SELECT + arrow as a separate track-reorder gesture.
 
-Cette affectation n'est pas présentée comme une commande native Ableton Live 10. La documentation Push d'Ableton décrit notamment SHIFT + LEFT/RIGHT en Session comme un déplacement de la fenêtre de huit pistes, pas comme un réordonnancement de pistes. StrattV4 conserve donc le geste de réordonnancement fourni par DrivenByMoss/Bitwig, dans le contexte Track, sans détourner les commandes de navigation Session.
+## Hardware test required
 
-## Recette matérielle à effectuer
+On Push 1 with Bitwig Studio 4.3.10:
+1. Move a normal track left and right in Track mode.
+2. Confirm the moved track stays selected.
+3. Repeat with a collapsed and expanded group track; confirm its children remain grouped and ordered.
+4. Test the first and last tracks; no track should disappear or change group.
+5. Confirm normal arrows, SHIFT + arrows, IN/OUT and other commands remain unchanged.
 
-Sur Push 1 avec Bitwig Studio 4.3.10 :
-
-1. En mode Track, déplacer une piste ordinaire vers la gauche puis vers la droite.
-2. Vérifier que la piste reste sélectionnée après chaque déplacement.
-3. Répéter avec un Group Track replié, puis déplié ; vérifier que tous ses enfants restent dans le groupe et conservent leur ordre.
-4. Tester les première et dernière pistes ; aucune piste ne doit disparaître ni changer de groupe.
-5. Vérifier que LEFT/RIGHT sans SHIFT, IN/OUT et les autres commandes restent inchangés.
-
-La CI valide le câblage source et la compilation ; elle ne remplace pas cette recette sur le Push 1 physique.
+CI checks source wiring and compilation; it does not replace the physical Push 1 test.
