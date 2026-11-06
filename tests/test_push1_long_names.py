@@ -2,7 +2,13 @@
 """Regression tests for one-line, dot-marked Push 1 long-name rendering."""
 
 from pathlib import Path
+import sys
 import unittest
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPOSITORY_ROOT / "scripts"))
+
+from patch_manifest import PATCH_STEPS
 
 ROOT = Path("vendor/DrivenByMoss/src/main/java/de/mossgrabers/controller/ableton/push")
 DISPLAY = ROOT / "controller/Push1Display.java"
@@ -181,9 +187,9 @@ class Push1LongNameDisplayTests(unittest.TestCase):
         self.assertNotIn("StringUtils", source)
 
     def test_long_name_patch_runs_inside_transactional_staging(self):
-        source = PATCHER.read_text(encoding="utf-8")
-        self.assertIn('"apply_push1_long_names.py"', source)
-        self.assertLess(source.index("apply_push1_french.py"), source.index("apply_push1_long_names.py"))
+        patch_names = tuple(step.script for step in PATCH_STEPS)
+        self.assertIn("apply_push1_long_names.py", patch_names)
+        self.assertLess(patch_names.index("apply_push1_french.py"), patch_names.index("apply_push1_long_names.py"))
 
 
 if __name__ == "__main__":

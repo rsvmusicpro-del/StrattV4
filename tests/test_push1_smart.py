@@ -2,11 +2,15 @@
 """Regression checks for SMART harmonization, MIDI lifecycle and inherited PLAY colors."""
 
 from pathlib import Path
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from patch_manifest import PATCH_STEPS, REQUIRED_SOURCES
+
 PATCH = ROOT / "scripts/apply_push1_smart.py"
-TRANSACTIONAL = ROOT / "scripts/apply_push1_palette_transactional.py"
 PALETTE = ROOT / "scripts/apply_push1_palette.py"
 LIFECYCLE = ROOT / "scripts/apply_push1_midi_lifecycle.py"
 
@@ -105,10 +109,10 @@ class Push1SmartModeTests(unittest.TestCase):
             self.assertIn(token, source)
 
     def test_transactional_build_runs_smart_after_palette_without_retired_patch(self):
-        source = TRANSACTIONAL.read_text(encoding="utf-8")
-        self.assertLess(source.index("apply_push1_palette.py"), source.index("apply_push1_smart.py"))
-        self.assertNotIn("apply_push1_cheat.py", source)
-        self.assertIn('"SmartView.java"', source)
+        patch_names = tuple(step.script for step in PATCH_STEPS)
+        self.assertLess(patch_names.index("apply_push1_palette.py"), patch_names.index("apply_push1_smart.py"))
+        self.assertNotIn("apply_push1_cheat.py", patch_names)
+        self.assertIn("controller/ableton/push/view/SmartView.java", REQUIRED_SOURCES)
 
 
 if __name__ == "__main__":
