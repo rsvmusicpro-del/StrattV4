@@ -22,6 +22,18 @@ class ReplaceOnceTests(unittest.TestCase):
         with self.assertRaisesRegex(SystemExit, "sample: expected exactly one source anchor, found 2"):
             replace_once("alpha alpha", "alpha", "beta", "sample")
 
+    def test_rejects_empty_anchor(self):
+        with self.assertRaisesRegex(SystemExit, "sample: source anchor must be a non-empty string"):
+            replace_once("alpha", "", "beta", "sample")
+
+    def test_rejects_no_op_replacement(self):
+        with self.assertRaisesRegex(SystemExit, "sample: refusing a no-op source replacement"):
+            replace_once("alpha", "alpha", "alpha", "sample")
+
+    def test_rejects_empty_label(self):
+        with self.assertRaisesRegex(SystemExit, "patch label must be a non-empty string"):
+            replace_once("alpha", "alpha", "beta", " ")
+
     def test_does_not_mutate_input_on_failure(self):
         source = "alpha alpha"
         with self.assertRaises(SystemExit):

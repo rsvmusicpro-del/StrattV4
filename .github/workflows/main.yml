@@ -58,6 +58,9 @@ jobs:
       - name: Apply StrattV4 customizations transactionally
         run: python3 -B -u scripts/apply_push1_palette_transactional.py
 
+      - name: Validate Python source syntax
+        run: python3 -B -m compileall -q scripts tests
+
       - name: Run MIDI lifecycle behavioral tests
         run: |
           test_dir="$(mktemp -d)"
