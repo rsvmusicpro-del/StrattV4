@@ -13,7 +13,7 @@ Le routage reste celui de DrivenByMoss :
 
 La version amont 19.2.2 résout le voisin à partir d'une banque globale aplatie de 400 pistes et de \`Track.position()\`. Dans un projet hiérarchique, deux éléments consécutifs de cette banque ne sont pas nécessairement frères : après un Group Track développé, l'élément suivant peut être son enfant. Un simple contrôle \`!hasParent()\` sur la piste courante ne protège donc pas le déplacement d'un groupe contre l'un de ses enfants.
 
-La correction StrattV4 remplace uniquement la résolution du voisin : elle utilise \`CursorTrack.createSiblingsTrackBank(400, 0, 0, false, false)\` et \`TrackBank.cursorIndex()\`. Le voisin est ainsi recherché dans la banque des pistes de même niveau que le curseur. Les limites et l'existence de la cible sont contrôlées avant d'appeler l'API d'insertion.
+La correction StrattV4 remplace uniquement la résolution du voisin : elle utilise \`CursorTrack.createSiblingsTrackBank(400, 0, 0, false, false)\` et \`TrackBank.cursorIndex()\`. Le voisin est ainsi recherché dans la banque des pistes de même niveau que le curseur. Les limites sont contrôlées dans la banque sœur. La disponibilité du voisin est vérifiée par `CursorTrack.hasPrevious/hasNext` (`canSelectPrevious/Next`), valeurs suivies par DrivenByMoss. Le patch n'interroge pas `Track.exists()` sur un objet brut non abonné, ce qui évite une lecture potentiellement périmée.
 
 Aucun nouveau gestionnaire de touches n'est ajouté. Le routage Push 1 et le geste SHIFT natifs restent ceux de DrivenByMoss.
 

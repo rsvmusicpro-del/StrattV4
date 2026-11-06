@@ -18,7 +18,8 @@ Le patch \`scripts/apply_push1_track_reorder.py\` :
 - remplace la banque globale par une banque de frères qui suit le CursorTrack ;
 - marque \`cursorIndex\` comme intéressé ;
 - résout le voisin par index relatif dans cette banque ;
-- vérifie la disponibilité du voisin et son existence ;
+- vérifie les limites dans la banque sœur et la disponibilité via les indicateurs `CursorTrack.hasPrevious/hasNext` déjà suivis par DrivenByMoss ;
+- n'effectue pas de lecture `exists().get()` sur un objet `Track` brut non abonné ;
 - conserve les points d'insertion et la sémantique d'échange DrivenByMoss ;
 - ne modifie ni les commandes Push ni les mappings physiques.
 

@@ -113,7 +113,10 @@ new_next = """    @Override
             return null;
 
         final Track target = this.siblingTrackBank.getItemAt (targetIndex);
-        return target != null && target.exists ().get () ? target : null;
+        // CursorTrack.hasPrevious/hasNext is the subscribed availability guard.
+        // Do not read Track.exists() here: this raw TrackBank item has no observer
+        // wrapper, so an unmarked exists value can be stale or permanently false.
+        return target;
     }
 """
 source = replace_once(source, old_next, new_next, "Next sibling-only track move and resolver")

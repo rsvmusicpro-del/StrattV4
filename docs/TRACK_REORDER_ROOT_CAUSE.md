@@ -37,7 +37,7 @@ Cette incohérence est une cause technique plausible et directement étayée par
 
 ## Nouvelle implémentation
 
-Le nouveau patch \`scripts/apply_push1_track_reorder.py\` remplace la banque globale par \`CursorTrack.createSiblingsTrackBank(400, 0, 0, false, false)\`. Il utilise \`cursorIndex()\` pour sélectionner le voisin dans la banque de même niveau, vérifie les limites et l'existence, puis conserve les points d'insertion DrivenByMoss.
+Le nouveau patch `scripts/apply_push1_track_reorder.py` remplace la banque globale par `CursorTrack.createSiblingsTrackBank(400, 0, 0, false, false)`. Il utilise `cursorIndex()` pour sélectionner le voisin dans la banque de même niveau, vérifie les limites et s'appuie sur `CursorTrack.hasPrevious/hasNext` pour confirmer la disponibilité du voisin. Il évite de lire `exists().get()` sur un `Track` brut non abonné, puis conserve les points d'insertion DrivenByMoss.
 
 Le patch n'ajoute pas de commande Push personnalisée et ne change pas la navigation IN/OUT, les mappings MIDI ou les autres modes.
 

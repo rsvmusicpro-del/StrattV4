@@ -55,7 +55,9 @@ class Push1TrackReorderTests(unittest.TestCase):
         self.assertIn("!this.canSelectNext ()", source)
         self.assertIn("this.track.afterTrackInsertionPoint ().moveTracks (prevTrack)", source)
         self.assertIn("this.track.beforeTrackInsertionPoint ().moveTracks (nextTrack)", source)
-        self.assertIn("target.exists ().get ()", source)
+        self.assertNotIn("target.exists ().get ()", source)
+        self.assertIn("!this.canSelectPrevious ()", source)
+        self.assertIn("!this.canSelectNext ()", source)
         self.assertIn("targetIndex < 0 || targetIndex >= NUM_TRACKS_LARGE_BANK", source)
 
     def test_group_and_child_tracks_use_the_same_sibling_scoped_operation(self):
