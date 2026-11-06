@@ -105,14 +105,21 @@ new_next = """    @Override
     private Track getSiblingTrackAtCursorOffset (final int offset)
     {
         final int cursorIndex = this.siblingTrackBank.cursorIndex ().get ();
+        if (cursorIndex < 0 || cursorIndex >= NUM_TRACKS_LARGE_BANK)
+            return null;
+
         final int targetIndex = cursorIndex + offset;
-        if (cursorIndex < 0 || targetIndex < 0 || targetIndex >= NUM_TRACKS_LARGE_BANK)
+        if (targetIndex < 0 || targetIndex >= NUM_TRACKS_LARGE_BANK)
             return null;
 
         final Track target = this.siblingTrackBank.getItemAt (targetIndex);
-        // CursorTrack.hasPrevious/hasNext is the subscribed availability guard.
-        // Do not read Track.exists() here: this raw TrackBank item has no observer
-        // wrapper, so an unmarked exists value can be stale or permanently false.
+        // Raw bank items must explicitly subscribe to existence before their
+        // value is read. The cursor's hasPrevious/hasNext guard alone does not
+        // prove that this indexed slot is populated.
+        target.exists ().markInterested ();
+        if (!target.exists ().get ())
+            return null;
+
         return target;
     }
 """
@@ -125,6 +132,8 @@ for token in (
     "siblingTrackBank.cursorIndex ().markInterested ()",
     "this.siblingTrackBank.cursorIndex ().get ()",
     "this.siblingTrackBank.getItemAt (targetIndex)",
+    "target.exists ().markInterested ()",
+    "if (!target.exists ().get ())",
     "this.track.afterTrackInsertionPoint ().moveTracks (prevTrack)",
     "this.track.beforeTrackInsertionPoint ().moveTracks (nextTrack)",
 ):
