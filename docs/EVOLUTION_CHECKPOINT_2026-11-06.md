@@ -68,3 +68,14 @@ Le propriétaire du projet confirme que le dernier commit et son build de test o
 - Digest : `sha256:c91b9fc200e6fbc02a2d8519599c7e934e9661dfb1457f224297dc72610c68b5`.
 - La validation matérielle est une déclaration explicite du propriétaire du projet datée du 2026-11-06.
 - La branche `v4-foundation` reste inchangée : `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`.
+
+
+## Build logiciel de référence après déplacement des devices
+
+- Commit : `2b26d1203e8c3923a27df0a1b1f95d83235c9e7d` sur `evolution`.
+- Build #21 : run `42265014484`, conclusion `success`.
+- Étapes du job : sous-module épinglé, patch transactionnel, tests Java MIDI, suite Python, compilation Maven, vérification de l'enregistrement Push 1 et publication : toutes réussies.
+- Artefact : `StrattV4-Push1-Test`, ID `13526433106`, taille `12,265,248 bytes`.
+- SHA-256 : `2d9f70c125e5a9d407ced37a66753f80c259a198de24bcb8f1a23703cb258dd4`.
+- Cette validation est logicielle/CI. La fonction de déplacement des devices n'a pas encore reçu de confirmation de test matériel distincte.
+- Référence matérielle déclarée précédemment par le propriétaire : `4eb43cd67510c97cfb744332cb47fc606e5f8c94` ; les commits ultérieurs ne sont pas automatiquement réputés testés sur matériel.
