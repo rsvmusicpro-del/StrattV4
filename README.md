@@ -11,11 +11,17 @@ StrattV4 est une extension Bitwig autonome dédiée à l'Ableton Push 1, ciblant
 - Affichage français, gestion des noms longs et VU.
 - Création de scènes et protections contre les tâches différées obsolètes.
 
-## Construction
+## Construction et architecture
 
-Le dépôt épingle la source DrivenByMoss 19.2.2 comme sous-module à la révision déclarée dans le workflow. Les personnalisations sont appliquées transactionnellement à une copie de travail. La CI vérifie aussi la syntaxe de tous les scripts et tests Python, exécute les tests Java comportementaux et la suite Python, compile avec Maven, vérifie que seul le contrôleur Push 1 est enregistré, puis produit `StrattV4.bwextension`.
+Le dépôt épingle la source DrivenByMoss 19.2.2 à la révision `013620c1330cdcf896e96ef8fdc8a2123e4fce6a`. Les 22 personnalisations sont décrites dans `scripts/patch_manifest.py` avec leur ordre, leur objectif et les sources Java requises. Le moteur `scripts/apply_push1_palette_transactional.py` vérifie l'amont, applique les patchs sur une copie temporaire, valide les sorties puis installe la copie avec restauration de l'original si le remplacement final échoue.
 
-Le dernier jalon CI réussi est documenté dans [docs/EVOLUTION_PHASE_1_2026-11-06.md](docs/EVOLUTION_PHASE_1_2026-11-06.md). Il valide le build automatisé du commit concerné, pas une nouvelle recette matérielle. Un build réussi ne remplace jamais un essai sur Push 1 physique avec Bitwig Studio 4.3.10.
+La CI vérifie la baseline `v4-foundation` à son SHA exact, refuse les suppressions de fichiers par rapport à cette baseline, valide la syntaxe Python, exécute les tests Java et Python, compile Maven, vérifie l'enregistrement exclusif Push 1 et l'intégrité de l'archive.
+
+Jalons techniques :
+- [Phase 1 — durcissement du moteur de patchs](docs/EVOLUTION_PHASE_1_2026-11-06.md)
+- [Phase 2 — registre centralisé, orchestration testée et garde-fou baseline](docs/EVOLUTION_PHASE_2_2026-11-06.md)
+
+Un build réussi valide la compilation et le packaging, pas le comportement physique. Une recette sur Push 1 avec Bitwig Studio 4.3.10 reste nécessaire après les changements concernés.
 
 ## Prérequis
 

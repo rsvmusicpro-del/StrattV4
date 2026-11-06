@@ -78,6 +78,8 @@ Les workflows de build de développement doivent se déclencher sur `evolution` 
 
 Les checks obligatoires pour toute évolution sont : tests Java, tests Python, compilation Maven, enregistrement Push 1 exclusif, intégrité ZIP, artefact et comparaison de la baseline.
 
+Le workflow vérifie désormais à chaque exécution que `v4-foundation` reste exactement sur `5978d89e4deeacb93f415111511d2fdf98763041` et compare les arbres Git pour refuser toute suppression de fichier par rapport à cette référence. Ce contrôle automatisé complète la politique, mais ne remplace pas une règle de protection GitHub contre le force-push ou la suppression de branche.
+
 ## État de protection au 2026-11-06
 
 - [x] Commit de référence enregistré.

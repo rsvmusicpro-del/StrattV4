@@ -8,8 +8,10 @@
 - Branche de travail unique : `evolution`
 - Branche baseline immuable : `v4-foundation` (ne jamais modifier)
 - Commit baseline validé : `5978d89e4deeacb93f415111511d2fdf98763041`
-- Build associé au snapshot courant : non disponible à ce stade. Dernier build CI vérifié : run `42265014484` (#21), commit `2b26d1203e8c3923a27df0a1b1f95d83235c9e7d`, artefact `13526433106`, digest `sha256:2d9f70c125e5a9d407ced37a66753f80c259a198de24bcb8f1a23703cb258dd4` (22 commits avant le snapshot)
-- Politique anti-régression : `docs/REGRESSION_POLICY.md`
+- Dernier commit de code validé par CI : `78d71c23dfa4dfbed5003223e2489eae8c7dbbec` ; run #62 `42296857696`, résultat `success` ; artefact `StrattV4-Push1-Test` ID `13541798425`, SHA-256 `8b5e78a1761ec5528818e533f7833c7849c143f30ee0c2d789835825b2511ea1`.
+- Registre des personnalisations : `scripts/patch_manifest.py` (22 étapes, 24 sources attendues).
+- Tests du moteur transactionnel : `tests/test_patch_pipeline.py`.
+- Politique anti-régression : `docs/REGRESSION_POLICY.md` (la CI vérifie le SHA de la baseline et refuse les suppressions de fichiers).
 - Cible : Ableton Push 1 et Bitwig Studio 4.3.10
 - Java : 17
 - Source amont : DrivenByMoss 19.2.2
