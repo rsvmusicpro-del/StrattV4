@@ -87,6 +87,16 @@ La workflow GitHub Actions doit :
 
 ## Journal de reprise
 
+### Point de sauvegarde — évolution validée du 2026-11-06
+
+- Commit de code testé : `084dad306accae879ecc72e94c8a531fbaeb3aeb`.
+- Build CI : run `42256896568`, résultat `success`.
+- Artefact unique : `StrattV4-Push1-Test`, ID `13522418500`, SHA-256 `4d578854652c96048253d33bcd3a7989adc11a08157b533e625acf1b669c6a93`.
+- Le propriétaire confirme que le test matériel est effectué et concluant.
+- Détails, changements, preuves et limites consignés dans `docs/EVOLUTION_CHECKPOINT_2026-11-06.md`.
+- Comparaison avec la baseline : 7 commits en avance, 0 en retard. Baseline inchangée : `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`.
+
+
 ### Initialisation
 
 - Commit : `fac05b2ee0f535030b0677255b42adff48429e29`
