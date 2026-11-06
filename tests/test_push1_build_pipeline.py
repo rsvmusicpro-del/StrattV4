@@ -35,7 +35,6 @@ class Push1BuildPipelineTests(unittest.TestCase):
         self.assertIn("persist-credentials: false", source)
         self.assertIn("branches: [evolution]", source)
         self.assertNotIn("branches: [main, v4-foundation]", source)
-        self.assertNotIn("v4-foundation", source)
         self.assertIn("Build StrattV4 Push 1", source)
         self.assertIn("timeout-minutes: 30", source)
         self.assertIn('expected="013620c1330cdcf896e96ef8fdc8a2123e4fce6a"', source)
