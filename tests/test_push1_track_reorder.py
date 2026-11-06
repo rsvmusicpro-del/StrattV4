@@ -43,8 +43,8 @@ class Push1TrackReorderTests(unittest.TestCase):
         self.assertIn("activeMode.selectNextItemPage ();", source)
         self.assertIn("this.canScrollUp = sceneBank.canScrollBackwards ();", source)
         self.assertIn("this.canScrollDown = sceneBank.canScrollForwards ();", source)
-        self.assertIn("this.canScrollLeft = mode != null && (shiftPressed ? mode.hasPreviousItem () : mode.hasPreviousItemPage ());", source)
-        self.assertIn("this.canScrollRight = mode != null && (shiftPressed ? mode.hasNextItem () : mode.hasNextItemPage ());", source)
+        self.assertIn("final IMode mode = this.surface.getModeManager ().getActive ();", source)
+        self.assertIn("Push1TrackMoveCommand.isGestureActive (this.surface)", source)
 
     def test_patch_is_limited_to_cursor_navigation_not_hardware_mapping(self):
         source = SCRIPT.read_text(encoding="utf-8")
@@ -59,6 +59,7 @@ class Push1TrackReorderTests(unittest.TestCase):
             trigger = Path(temporary) / "vendor/DrivenByMoss/src/main/java/de/mossgrabers/controller/ableton/push/command/trigger"
             trigger.mkdir(parents=True)
             (trigger / "PushCursorCommand.java").write_text(
+                "import de.mossgrabers.framework.daw.IModel;\n"
                 "class PushCursorCommand {\n"
                 "    protected void scrollLeft ()\n    {\n"
                 "        final IMode activeMode = this.surface.getModeManager ().getActive ();\n"
@@ -89,6 +90,7 @@ class Push1TrackReorderTests(unittest.TestCase):
             self.assertEqual(patched.count("Push1TrackMoveCommand.isGestureActive"), 1)
             self.assertIn("activeMode.selectPreviousItemPage ();", patched)
             self.assertIn("activeMode.selectNextItemPage ();", patched)
+            self.assertIn("import de.mossgrabers.framework.daw.data.ICursorTrack;", patched)
             self.assertTrue((trigger / "Push1TrackMoveCommand.java").is_file())
 
 
