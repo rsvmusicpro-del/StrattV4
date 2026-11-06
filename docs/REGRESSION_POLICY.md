@@ -2,10 +2,10 @@
 
 ## Référence de référence immuable (baseline)
 
-Le build validé par l'utilisateur et testé sur le matériel est la référence fonctionnelle à préserver.
+Le snapshot source validé matériellement par le propriétaire est la référence fonctionnelle à préserver. La validation matérielle est une déclaration utilisateur ; elle ne remplace pas les preuves CI associées au SHA exact.
 
 - Branche de référence : `v4-foundation`
-- Commit exact : `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`
+- Commit exact : `5978d89e4deeacb93f415111511d2fdf98763041`
 - Build : `Build StrattV4 Push 1` #3
 - Workflow run : `42248099882`
 - Résultat CI : `success`
@@ -21,7 +21,7 @@ Cette référence est un point de comparaison, jamais une branche de développem
 ## Branche de travail unique
 
 - Branche d'évolution : `evolution`
-- Point de départ exact : `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`
+- Point de départ exact : `5978d89e4deeacb93f415111511d2fdf98763041`
 - Toutes les nouvelles modifications, améliorations, corrections et PR doivent partir de `evolution` et y être intégrées après validation.
 - Ne plus utiliser `v4-foundation` comme branche de travail.
 - Ne pas développer sur `main`.
@@ -50,7 +50,7 @@ Cette liste est un résumé lisible, pas une limitation du périmètre : tout co
 ## Règles pour chaque évolution
 
 1. Commencer par lire ce contrat, le protocole de reprise et le commit de référence.
-2. Comparer la branche candidate à `ec5871a` avant et après le changement.
+2. Comparer la branche candidate à `5978d89` avant et après le changement.
 3. Ne jamais accepter une suppression de fichier, de test, de commande, de mapping ou de comportement sans analyse d'impact explicite.
 4. Tout changement fonctionnel doit ajouter ou mettre à jour des tests qui prouvent le nouveau comportement ET préservent les comportements existants concernés.
 5. Conserver l'intégralité des tests de référence ; les tests supplémentaires s'ajoutent, ils ne remplacent pas les anciens.
@@ -87,3 +87,13 @@ Les checks obligatoires pour toute évolution sont : tests Java, tests Python, c
 - [ ] Règle GitHub empêchant suppression, force-push et modifications directes de `v4-foundation` : activation administrateur requise.
 - [ ] Définir `evolution` comme branche par défaut du dépôt : opération d'administration non disponible via l'intégration actuelle.
 - [ ] Archiver le binaire de référence hors de la rétention temporaire GitHub.
+
+
+## État du snapshot de référence — 2026-11-06
+
+- Baseline courante : `5978d89e4deeacb93f415111511d2fdf98763041` (`StrattV4 backup`).
+- Arbre source : `3222a047e110c37a63161169ebf0979ecdb02e6a`, identique au HEAD antérieur `b08d03ec0e39187e5f200f14f051ce3eb0e82550`.
+- Les branches `evolution` et `v4-foundation` ont été positionnées sur ce snapshot ; `ec5871a` reste conservé comme parent historique.
+- Le dernier build CI vérifié est run `42265014484` (#21), succès sur `2b26d1203e8c3923a27df0a1b1b5?`; ce SHA n'est pas celui du snapshot.
+- Aucune validation CI du snapshot n'est disponible dans l'historique consulté. Un nouveau run doit être associé au SHA exact avant livraison.
+- Les métadonnées GitHub ont signalé `protected: false` lors de l'audit ; la lecture détaillée des règles a été refusée à l'intégration. Ne pas prétendre que la protection est active.
