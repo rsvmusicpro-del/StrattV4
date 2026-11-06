@@ -108,3 +108,13 @@ La workflow GitHub Actions doit :
 ## Baseline validée et branche unique
 
 Voir impérativement `docs/REGRESSION_POLICY.md`. La baseline matérielle est le commit `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`, build #3, run `42248099882`, artefact digest `sha256:1a93fc5541b98b93ad98a9aebb51151452cb20b6c8c01f5a94dad892eb472dab`. La seule branche d'évolution autorisée est `evolution`. `v4-foundation` est réservée à la comparaison et ne doit recevoir aucun commit.
+
+
+### Validation matérielle la plus récente — 2026-11-06
+
+- Le propriétaire confirme que le dernier commit/build précédent fonctionne parfaitement sur le Push 1 ; cet état est enregistré comme testé et validé matériellement.
+- Commit : `098443b6197539beced6536d223d89e1c44e3ed7` sur `evolution`.
+- CI : build #15, run `42260732361`, résultat `success`.
+- Artefact : `StrattV4-Push1-Test`, ID `13523784316`, digest `sha256:c91b9fc200e6fbc02a2d8519599c7e934e9661dfb1457f224297dc72610c68b5`.
+- Baseline immuable : `v4-foundation` — `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`.
+- Cette validation ne remplace pas les contrôles automatisés du prochain commit ni sa propre recette matérielle.
