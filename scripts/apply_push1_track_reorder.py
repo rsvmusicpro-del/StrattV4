@@ -80,37 +80,34 @@ def patch_cursor_command() -> None:
     source = path.read_text(encoding="utf-8")
     left_anchor = """    protected void scrollLeft ()
     {
-        final IMode activeMode = this.surface.getModeManager ().getActive ();
+        if (this.surface.getModeManager ().isActive (Modes.BROWSER))
 """
     left_insert = """    protected void scrollLeft ()
     {
         if (Push1TrackMoveCommand.executeIfRequested (this.model, this.surface, true))
             return;
 
-        final IMode activeMode = this.surface.getModeManager ().getActive ();
+        if (this.surface.getModeManager ().isActive (Modes.BROWSER))
 """
     source = replace_once(source, left_anchor, left_insert, "PushCursorCommand left track move")
+
     right_anchor = """    protected void scrollRight ()
     {
-        final IMode activeMode = this.surface.getModeManager ().getActive ();
+        if (this.surface.getModeManager ().isActive (Modes.BROWSER))
 """
     right_insert = """    protected void scrollRight ()
     {
         if (Push1TrackMoveCommand.executeIfRequested (this.model, this.surface, false))
             return;
 
-        final IMode activeMode = this.surface.getModeManager ().getActive ();
+        if (this.surface.getModeManager ().isActive (Modes.BROWSER))
 """
     source = replace_once(source, right_anchor, right_insert, "PushCursorCommand right track move")
-    state_anchor = """        this.canScrollUp = sceneBank.canScrollBackwards ();
-        this.canScrollDown = sceneBank.canScrollForwards ();
 
-        final IMode mode = this.surface.getModeManager ().getActive ();
+    state_anchor = """        final IMode mode = this.surface.getModeManager ().getActive ();
+        final boolean shiftPressed = this.surface.isShiftPressed ();
 """
-    state_insert = """        this.canScrollUp = sceneBank.canScrollBackwards ();
-        this.canScrollDown = sceneBank.canScrollForwards ();
-
-        if (Push1TrackMoveCommand.isGestureActive (this.surface))
+    state_insert = """        if (Push1TrackMoveCommand.isGestureActive (this.surface))
         {
             final de.mossgrabers.framework.daw.data.ICursorTrack cursorTrack = this.model.getCursorTrack ();
             final boolean canMove = cursorTrack != null && cursorTrack.doesExist () && !cursorTrack.hasParent ();
@@ -120,6 +117,7 @@ def patch_cursor_command() -> None:
         }
 
         final IMode mode = this.surface.getModeManager ().getActive ();
+        final boolean shiftPressed = this.surface.isShiftPressed ();
 """
     source = replace_once(source, state_anchor, state_insert, "PushCursorCommand track move arrow states")
     path.write_text(source, encoding="utf-8")
