@@ -27,7 +27,7 @@ jobs:
           git fetch --no-tags origin v4-foundation
           actual_foundation="$(git rev-parse FETCH_HEAD)"
           test "$actual_foundation" = "$expected_foundation"
-          deleted_files="$(git diff --name-only --diff-filter=D FETCH_HEAD...HEAD)"
+          deleted_files="$(git diff --name-only --diff-filter=D FETCH_HEAD HEAD)"
           if [ -n "$deleted_files" ]; then
             echo "Refusing unexplained deletions relative to v4-foundation:" >&2
             printf '%s\\n' "$deleted_files" >&2

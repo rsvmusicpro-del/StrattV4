@@ -30,7 +30,7 @@ class Push1BuildPipelineTests(unittest.TestCase):
         self.assertIn("submodules: recursive", source)
         self.assertIn("Verify immutable foundation and reject file deletions", source)
         self.assertIn('expected_foundation="5978d89e4deeacb93f415111511d2fdf98763041"', source)
-        self.assertIn("git diff --name-only --diff-filter=D FETCH_HEAD...HEAD", source)
+        self.assertIn("git diff --name-only --diff-filter=D FETCH_HEAD HEAD", source)
         self.assertIn("permissions:\n  contents: read", source)
         self.assertIn("persist-credentials: false", source)
         self.assertIn("branches: [evolution]", source)
