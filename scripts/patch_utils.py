@@ -6,9 +6,10 @@ from __future__ import annotations
 def replace_once(source: str, old: str, new: str, label: str) -> str:
     """Replace one exact, non-empty source anchor or stop on source drift.
 
-    Empty anchors and no-op replacements are rejected explicitly: both usually
-    indicate a malformed patch definition rather than a useful source change.
-    The input string is immutable, so failures cannot partially modify a file.
+    No-op replacements are permitted intentionally: a patch can use this
+    primitive to assert that a known upstream anchor is still unique without
+    changing it. The input string is immutable, so failures cannot partially
+    modify a file.
     """
     if not isinstance(source, str):
         raise SystemExit(f"{label}: source must be text")
@@ -18,8 +19,6 @@ def replace_once(source: str, old: str, new: str, label: str) -> str:
         raise SystemExit(f"{label}: replacement must be text")
     if not isinstance(label, str) or not label.strip():
         raise SystemExit("patch label must be a non-empty string")
-    if old == new:
-        raise SystemExit(f"{label}: refusing a no-op source replacement")
 
     count = source.count(old)
     if count != 1:
