@@ -36,7 +36,7 @@ class Push1TrackReorderTests(unittest.TestCase):
 
     def test_leds_follow_shift_move_availability(self):
         source,_,_=self.sections(); update=source[source.index("protected void updateArrowStates"):]
-        for token in ("shiftPressed && this.isTrackReorderContext ()","!cursorTrack.hasParent ()","this.canScrollLeft = canMove && cursorTrack.canSelectPrevious ();","this.canScrollRight = canMove && cursorTrack.canSelectNext ();"):
+        for token in ("this.surface.isShiftPressed () && this.isTrackReorderContext ()","!cursorTrack.hasParent ()","this.canScrollLeft = canMove && cursorTrack.canSelectPrevious ();","this.canScrollRight = canMove && cursorTrack.canSelectNext ();"):
             self.assertIn(token,update)
 
     def test_unmodified_navigation_and_browser_remain(self):
