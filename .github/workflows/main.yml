@@ -3,9 +3,9 @@ name: Build StrattV4 Push 1
 on:
   workflow_dispatch:
   push:
-    branches: [main, v4-foundation]
+    branches: [evolution]
   pull_request:
-    branches: [main]
+    branches: [evolution]
 
 permissions:
   contents: read
@@ -102,7 +102,7 @@ jobs:
           retention-days: 7
 
       - name: Upload StrattV4 release candidate
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/evolution'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: StrattV4-Push1
