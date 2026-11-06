@@ -157,3 +157,16 @@ Voir impérativement `docs/REGRESSION_POLICY.md`. La baseline matérielle est le
 - Le dernier run CI connu avant ce point est #21 / `42265014484`, associé à `2b26d12`, et non au parent `3280892`. Contrôler le nouveau run après ce commit et enregistrer son artefact/digest.
 - Rapport utilisateur reçu : validation matérielle positive du dernier test matériel du dernier commit en date ; scénarios et SHA de l'extension testée non détaillés.
 - Baseline immuable : `v4-foundation` / `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`. Continuer exclusivement sur `evolution`.
+
+
+### Reprise à froid — reconstruction après rejet matériel du déplacement
+
+- Rapport matériel propriétaire : déplacement des pistes/groupes aléatoire, dernière tentative rejetée.
+- Révoquer le statut validé du geste SHIFT + flèches ; aucune validation matérielle de cette fonction n'est acquise.
+- HEAD de départ : \`fc9f1813a2fa67a9ce58ae07f08ff371059c20f6\`.
+- Dernier build avant correction : run #40 \`42280252862\`, succès ; artefact \`13534363252\`, digest \`sha256:4b6af8c510b5d98d1112f9f2b8643c1e5e75fbdd773868f170d79daff4661f6c\`. Ce build ne contient pas la correction sibling-bank.
+- Historique des tentatives : \`3ab7097\`, \`847ae92\`, \`e08055f\`, \`e2f81d3\`, \`50ec514\`, \`fc9f181\`. Ne pas restaurer les anciennes interceptions personnalisées de \`PushCursorCommand\`.
+- Défaut de l'algorithme amont : banque globale aplatie de 400 pistes + \`Track.position()\` pour choisir un voisin ; un Group Track développé peut être adjacent à son enfant dans cette banque. Une garde sur le seul parent du curseur ne suffit pas.
+- Correction StrattV4 : \`scripts/apply_push1_track_reorder.py\` remplace la banque globale par \`CursorTrack.createSiblingsTrackBank(400, 0, 0, false, false)\` et résout le voisin via \`TrackBank.cursorIndex()\`. Le geste SHIFT + flèches et le routage natif sont conservés.
+- Contrôler les tests, Maven, l'enregistrement Push 1, le contenu du JAR, le digest du nouvel artefact et la comparaison avec baseline + parent.
+- Essai matériel obligatoire sur pistes racines, groupes repliés/dépliés, pistes enfants, limites et répétition des commandes. Jusqu'à confirmation, statut NON VALIDÉ.

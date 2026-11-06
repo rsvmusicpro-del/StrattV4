@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression checks for native DrivenByMoss Push 1 track/group reordering."""
+"""Regression checks for safe Push 1 track/group reordering."""
 from pathlib import Path
 import unittest
 
@@ -8,29 +8,29 @@ JAVA = ROOT / "vendor/DrivenByMoss/src/main/java/de/mossgrabers"
 
 
 class Push1TrackReorderTests(unittest.TestCase):
-    def test_navigation_patcher_leaves_native_cursor_command_alone(self):
+    def test_navigation_patcher_does_not_intercept_track_move_gesture(self):
         patcher = (ROOT / "scripts/apply_push1_navigation.py").read_text(encoding="utf-8")
-        self.assertNotIn("cursor_path", patcher)
         self.assertNotIn("PushCursorCommand.java", patcher)
-        self.assertNotIn("isTrackReorderContext", patcher)
         self.assertNotIn("swapWithPrevious", patcher)
         self.assertNotIn("swapWithNext", patcher)
 
-    def test_transactional_pipeline_does_not_install_a_competing_track_move_patch(self):
-        patcher = (ROOT / "scripts/apply_push1_palette_transactional.py").read_text(encoding="utf-8")
-        self.assertIn("apply_push1_navigation.py", patcher)
-        self.assertNotIn("apply_push1_track_reorder.py", patcher)
-        self.assertNotIn("Push1TrackMoveCommand.java", patcher)
+    def test_track_reorder_is_a_single_adapter_patch_not_a_second_command(self):
+        pipeline = (ROOT / "scripts/apply_push1_palette_transactional.py").read_text(encoding="utf-8")
+        patch = (ROOT / "scripts/apply_push1_track_reorder.py").read_text(encoding="utf-8")
+        self.assertIn("apply_push1_track_reorder.py", pipeline)
+        self.assertNotIn("Push1TrackMoveCommand.java", pipeline)
+        self.assertIn("CursorTrackImpl.java", patch)
+        self.assertNotIn("PushCursorCommand.java", patch)
 
-    def test_cursor_arrows_delegate_to_active_mode(self):
+    def test_cursor_arrows_keep_the_native_active_mode_dispatch(self):
         source = (JAVA / "controller/ableton/push/command/trigger/PushCursorCommand.java").read_text(encoding="utf-8")
         left = source[source.index("protected void scrollLeft"):source.index("protected void scrollRight")]
         right = source[source.index("protected void scrollRight"):source.index("protected ISceneBank getSceneBank")]
         self.assertIn("activeMode.selectPreviousItemPage ()", left)
         self.assertIn("activeMode.selectNextItemPage ()", right)
-        self.assertNotIn("cursorTrack.swapWith", left + right)
+        self.assertNotIn("swapWith", left + right)
 
-    def test_track_mode_owns_shift_reorder_gesture(self):
+    def test_track_mode_keeps_the_drivenbymoss_shift_gesture(self):
         source = (JAVA / "controller/ableton/push/mode/track/AbstractTrackMode.java").read_text(encoding="utf-8")
         previous = source[source.index("public void selectPreviousItemPage ()"):source.index("public void selectNextItemPage ()")]
         next_item = source[source.index("public void selectNextItemPage ()"):source.index("Handle the selection of a send effect")]
@@ -39,18 +39,31 @@ class Push1TrackReorderTests(unittest.TestCase):
         self.assertIn("this.surface.isShiftPressed ()", next_item)
         self.assertIn("cursorTrack.swapWithNext ()", next_item)
 
-    def test_bitwig_backend_moves_tracks_through_insertion_points(self):
+    def test_backend_uses_same_level_sibling_bank_not_flat_positions(self):
         source = (JAVA / "bitwig/framework/daw/data/CursorTrackImpl.java").read_text(encoding="utf-8")
-        self.assertIn("this.track.afterTrackInsertionPoint ().moveTracks (prevTrack);", source)
-        self.assertIn("this.track.beforeTrackInsertionPoint ().moveTracks (nextTrack);", source)
-        self.assertIn("prevTrack.selectInEditor ();", source)
-        self.assertIn("nextTrack.selectInEditor ();", source)
+        self.assertIn("createSiblingsTrackBank (NUM_TRACKS_LARGE_BANK, 0, 0, false, false)", source)
+        self.assertIn("siblingTrackBank.cursorIndex ().markInterested ()", source)
+        self.assertIn("this.siblingTrackBank.cursorIndex ().get ()", source)
+        self.assertIn("this.siblingTrackBank.getItemAt (targetIndex)", source)
+        self.assertNotIn("largeTrackBank", source)
+        self.assertNotIn("getPosition () - 1", source)
+        self.assertNotIn("getPosition () + 1", source)
 
-    def test_track_and_group_share_the_same_bitwig_track_primitive(self):
-        source = (JAVA / "bitwig/framework/daw/data/TrackImpl.java").read_text(encoding="utf-8")
-        self.assertIn("protected final Track            track;", source)
-        self.assertIn("public boolean isGroup ()", source)
-        self.assertIn("return this.track.isGroup ().get ();", source)
+    def test_moves_use_sibling_insertion_points_and_reject_missing_targets(self):
+        source = (JAVA / "bitwig/framework/daw/data/CursorTrackImpl.java").read_text(encoding="utf-8")
+        self.assertIn("!this.canSelectPrevious ()", source)
+        self.assertIn("!this.canSelectNext ()", source)
+        self.assertIn("this.track.afterTrackInsertionPoint ().moveTracks (prevTrack)", source)
+        self.assertIn("this.track.beforeTrackInsertionPoint ().moveTracks (nextTrack)", source)
+        self.assertIn("target.exists ().get ()", source)
+        self.assertIn("targetIndex < 0 || targetIndex >= NUM_TRACKS_LARGE_BANK", source)
+
+    def test_group_and_child_tracks_use_the_same_sibling_scoped_operation(self):
+        source = (JAVA / "bitwig/framework/daw/data/CursorTrackImpl.java").read_text(encoding="utf-8")
+        track = (JAVA / "bitwig/framework/daw/data/TrackImpl.java").read_text(encoding="utf-8")
+        self.assertIn("createSiblingsTrackBank", source)
+        self.assertIn("public boolean isGroup ()", track)
+        self.assertIn("return this.track.isGroup ().get ();", track)
 
 
 if __name__ == "__main__":

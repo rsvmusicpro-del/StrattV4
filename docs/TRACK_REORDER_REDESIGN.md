@@ -1,46 +1,30 @@
-# Réimplémentation — déplacement des pistes et Group Tracks sur Push 1
+# StrattV4 — reconstruction du déplacement Push 1
 
-## Décision
+## Décision d'architecture
 
-Ne plus ajouter de seconde implémentation de déplacement dans `PushCursorCommand`.
-Le contrôleur doit retrouver le chemin natif DrivenByMoss :
+Conserver le routage d'origine DrivenByMoss 19.2.2 et corriger uniquement la résolution des voisins dans le backend Bitwig.
 
-1. `PushCursorCommand.scrollLeft/scrollRight` délègue à `activeMode.selectPreviousItemPage()` / `selectNextItemPage()`.
-2. En mode Track (et ses modes de mixage dérivés), `AbstractTrackMode` interprète SHIFT comme un déplacement de piste et appelle `ICursorTrack.swapWithPrevious/Next()`.
-3. Le backend Bitwig déplace le Track sélectionné via son `TrackInsertionPoint` et sélectionne le voisin déplacé.
+Aucune interception supplémentaire dans \`PushCursorCommand\`, aucun nouveau mapping MIDI, aucune commande concurrente.
 
-La documentation DrivenByMoss décrit précisément SHIFT + flèches gauche/droite comme déplacement de la piste sélectionnée. Elle indique aussi que le déplacement fonctionne au-delà des frontières de pages depuis la version 16.3.
+## Cause racine retenue
 
-## Ce que les essais précédents nous apprennent
+\`CursorTrackImpl\` amont utilisait \`createTrackBank(400, 0, 0, true)\`, puis \`Track.position()\` pour prendre l'élément précédent/suivant. Cette banque est une vue globale aplatie. La proximité d'index ne garantit pas l'appartenance au même parent. En particulier, un Group Track développé peut être suivi immédiatement par son enfant dans la banque globale. La garde \`!cursorTrack.hasParent()\` de l'une des tentatives précédentes ne protégeait pas le voisin.
 
-- SELECT + flèches est abandonné : ce geste interfère avec d'autres gestes SELECT du Push.
-- La logique ajoutée dans `PushCursorCommand` a doublonné le routage que le mode Track sait déjà effectuer.
-- La restriction `!cursorTrack.hasParent()` a également empêché le déplacement des pistes enfants, alors que le besoin principal porte sur une piste ou un groupe sélectionné.
-- Les tests précédents vérifiaient surtout la présence de fragments de code. Ils ne prouvaient pas le chemin d'événement complet du Push jusqu'au mode Track.
+La résolution doit se faire à partir de \`CursorTrack.createSiblingsTrackBank(...)\`, puis de \`TrackBank.cursorIndex()\`. La banque de frères exprime le niveau hiérarchique pertinent et élimine le choix d'un enfant comme voisin d'un groupe parent.
 
-## Nouvelle règle d'implémentation
+## Reconstruction
 
-- Aucun appel direct à `swapWithPrevious/Next` depuis `PushCursorCommand`.
-- Aucun second état LED de déplacement calculé dans `PushCursorCommand`.
-- Le routage natif du curseur reste intact ; le mode actif est seul responsable de la sémantique SHIFT.
-- Le patch de navigation IN/OUT continue de traiter uniquement les commandes IN/OUT, le navigateur et les pages d'appareils.
-- Le geste doit être exercé depuis les modes Track/Volume documentés, pas depuis la vue Session si celle-ci ne fournit pas le mode Track correspondant.
+Le patch \`scripts/apply_push1_track_reorder.py\` :
+- remplace la banque globale par une banque de frères qui suit le CursorTrack ;
+- marque \`cursorIndex\` comme intéressé ;
+- résout le voisin par index relatif dans cette banque ;
+- vérifie la disponibilité du voisin et son existence ;
+- conserve les points d'insertion et la sémantique d'échange DrivenByMoss ;
+- ne modifie ni les commandes Push ni les mappings physiques.
 
-## Couverture de régression
+Le patch est appliqué à la copie de staging par le pipeline transactionnel. Si une ancre ou une postcondition échoue, le sous-module source reste intact.
 
-Les tests vérifient désormais les trois étages distincts : délégation des flèches, interprétation SHIFT dans `AbstractTrackMode`, puis déplacement Bitwig par insertion avant/après. Ils interdisent également au patcher de navigation de réécrire `PushCursorCommand`.
+## Limites de preuve
 
-Ces tests restent des contrôles de contrat source et de compilation ; ils ne remplacent pas la recette physique.
+Les tests Python contrôlent le contrat source après application des patchs. La CI valide la compilation Java 17, les tests, l'enregistrement Push 1 et le packaging. Aucun de ces contrôles ne remplace un test de l'extension dans Bitwig 4.3.10 sur Push 1.
 
-## Recette matérielle obligatoire
-
-Sur Push 1 + Bitwig Studio 4.3.10 :
-
-1. Entrer en mode Track, sélectionner une piste ordinaire qui n'est ni première ni dernière.
-2. Maintenir SHIFT + flèche gauche, puis SHIFT + flèche droite ; vérifier le changement réel d'ordre dans Bitwig.
-3. Refaire avec un Group Track et vérifier que le groupe et ses enfants restent ensemble.
-4. Tester une piste aux deux extrémités et vérifier l'absence de déplacement hors limites.
-5. Vérifier que les flèches seules conservent la navigation et que SHIFT + flèches ne perturbent pas les autres modes.
-6. Vérifier les autres fonctions Push déjà validées.
-
-Aucune validation matérielle ne sera revendiquée sur la seule base de la CI.

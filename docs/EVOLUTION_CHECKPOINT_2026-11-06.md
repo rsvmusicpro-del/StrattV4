@@ -100,3 +100,12 @@ Le commit `50ec514c68b3fd4bd08df69f3f9db15a1fa70225` retire cette surcharge de `
 - Le propriétaire a confirmé le 2026-11-06 la validation matérielle positive du dernier test du dernier commit en date. Le scénario exact et le SHA du binaire testé n'ont pas été précisés dans son rapport ; cette confirmation est conservée comme déclaration utilisateur, sans étendre sa portée à des scénarios non décrits.
 
 La prochaine compilation CI doit être associée au nouveau commit de ce point de sauvegarde. Une validation CI prouvera la compilation et les tests automatisés, pas à elle seule la validation de chaque combinaison matérielle.
+
+
+## Révocation de la validation matérielle — déplacement des pistes
+
+Le propriétaire a rejeté matériellement le geste SHIFT + flèches précédent : les déplacements étaient aléatoires. La conclusion antérieure selon laquelle la restauration du chemin natif suffisait est annulée. La fonctionnalité doit être considérée NON VALIDÉE.
+
+Cause technique retenue pour correction : le backend amont choisit les voisins dans une banque globale aplatie de 400 pistes. Une piste adjacente dans cette banque peut être un enfant d'un Group Track développé, pas un frère. La nouvelle correction doit résoudre les voisins dans une banque \`createSiblingsTrackBank\`, au même niveau hiérarchique.
+
+Le nouveau patch StrattV4 ne réécrit pas le geste physique ni le routage Push. Il corrige seulement la résolution du voisin. Le build #40 / run \`42280252862\` / artefact \`13534363252\` reste un build de l'ancienne logique ; ne pas l'utiliser comme preuve de la correction.

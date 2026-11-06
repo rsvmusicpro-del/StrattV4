@@ -65,6 +65,7 @@ class Push1BuildPipelineTests(unittest.TestCase):
             "apply_push1_modifier_gestures.py",
             "apply_push1_note_edit_touch_owner.py",
             "apply_push1_navigation.py",
+            "apply_push1_track_reorder.py",
             "apply_push1_french.py",
             "apply_push1_startup_message.py",
             "apply_push1_long_names.py",
