@@ -55,3 +55,16 @@ Les différences doivent rester explicables et conformes à `docs/REGRESSION_POL
 3. Vérifier le run CI `42256896568` et le digest de l'artefact.
 4. Reprendre le travail sur `evolution` uniquement ; ne jamais modifier `v4-foundation`.
 5. Traiter ce point comme le dernier jalon de référence validé par CI et déclaré concluant sur matériel par le propriétaire, sans extrapoler au-delà des tests réellement effectués.
+
+
+## Confirmation matérielle du dernier build précédent
+
+Le propriétaire du projet confirme que le dernier commit et son build de test ont été utilisés sur le Push 1 et que tout fonctionne parfaitement. Cette confirmation est enregistrée comme validation matérielle positive de l'état précédent, sans extrapolation à des scénarios non décrits.
+
+- Commit validé : `098443b6197539beced6536d223d89e1c44e3ed7`.
+- Branche : `evolution`.
+- Build : `Build StrattV4 Push 1` #15 — run `42260732361` — résultat `success`.
+- Artefact : `StrattV4-Push1-Test`, ID `13523784316`, taille `12,262,879 bytes`.
+- Digest : `sha256:c91b9fc200e6fbc02a2d8519599c7e934e9661dfb1457f224297dc72610c68b5`.
+- La validation matérielle est une déclaration explicite du propriétaire du projet datée du 2026-11-06.
+- La branche `v4-foundation` reste inchangée : `ec5871aed16ae1fe8a40ec27943f5561b5b7b168`.
