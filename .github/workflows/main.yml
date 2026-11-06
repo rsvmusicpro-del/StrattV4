@@ -21,6 +21,19 @@ jobs:
           submodules: recursive
           persist-credentials: false
 
+      - name: Verify immutable foundation and reject file deletions
+        run: |
+          expected_foundation="5978d89e4deeacb93f415111511d2fdf98763041"
+          git fetch --no-tags origin v4-foundation
+          actual_foundation="$(git rev-parse FETCH_HEAD)"
+          test "$actual_foundation" = "$expected_foundation"
+          deleted_files="$(git diff --name-only --diff-filter=D FETCH_HEAD...HEAD)"
+          if [ -n "$deleted_files" ]; then
+            echo "Refusing unexplained deletions relative to v4-foundation:" >&2
+            printf '%s\\n' "$deleted_files" >&2
+            exit 1
+          fi
+
       - name: Verify pinned upstream revision
         run: |
           expected="013620c1330cdcf896e96ef8fdc8a2123e4fce6a"
