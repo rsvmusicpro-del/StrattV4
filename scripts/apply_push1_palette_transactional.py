@@ -12,47 +12,17 @@ import subprocess
 import sys
 import tempfile
 
+from patch_manifest import EXPECTED_UPSTREAM, PATCH_STEPS, REQUIRED_SOURCES, resolve_patch_scripts
+
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 SUBMODULE = REPOSITORY_ROOT / "vendor" / "DrivenByMoss"
 SOURCE_ROOT = SUBMODULE / "src" / "main" / "java" / "de" / "mossgrabers"
-PATCH_SCRIPTS = (
-    # Restore the proven #389 global touch gate and symmetric MIDI unbind/rebind lifecycle.
-    REPOSITORY_ROOT / "scripts" / "apply_push1_all_encoder_vu.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_master_display.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_touch_lifecycle.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_palette.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_smart.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_midi_lifecycle.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_poly_sequencer_lifecycle.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_note_sequencer_lifecycle.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_modifier_gestures.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_note_edit_touch_owner.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_navigation.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_track_reorder.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_device_reorder.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_french.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_startup_message.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_long_names.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_clip_accent.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_playhead.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_small_knob_guard.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_encoder_touch.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_new_scene.py",
-    REPOSITORY_ROOT / "scripts" / "apply_push1_new_scene_gesture.py",
-)
-EXPECTED_UPSTREAM = "013620c1330cdcf896e96ef8fdc8a2123e4fce6a"
-PATCH_UTILS = REPOSITORY_ROOT / "scripts" / "patch_utils.py"
+PATCH_SCRIPTS = resolve_patch_scripts(REPOSITORY_ROOT)
 
 
 def main() -> int:
     if not SOURCE_ROOT.is_dir():
         raise SystemExit(f"DrivenByMoss source tree is missing: {SOURCE_ROOT}")
-    if not PATCH_UTILS.is_file():
-        raise SystemExit(f"Shared patch utility is missing: {PATCH_UTILS}")
-
-    for patch_script in PATCH_SCRIPTS:
-        if not patch_script.is_file():
-            raise SystemExit(f"Patch script is missing: {patch_script}")
 
     revision = subprocess.run(
         ["git", "-C", str(SUBMODULE), "rev-parse", "HEAD"],
@@ -86,42 +56,26 @@ def main() -> int:
 
         # All destructive edits happen in the temporary tree. A failed anchor,
         # missing file or postcondition leaves the checked-out source untouched.
-        for patch_script in PATCH_SCRIPTS:
-            subprocess.run(
-                [sys.executable, "-B", str(patch_script)],
-                cwd=Path(temporary),
-                check=True,
-            )
+        for step, patch_script in zip(PATCH_STEPS, PATCH_SCRIPTS):
+            try:
+                subprocess.run(
+                    [sys.executable, "-B", str(patch_script)],
+                    cwd=Path(temporary),
+                    check=True,
+                )
+            except subprocess.CalledProcessError as error:
+                raise SystemExit(
+                    f"Patch step '{step.script}' failed (exit code {error.returncode}); "
+                    "the staged source tree was discarded."
+                ) from error
 
-        required_sources = (
-            staging_root / "framework" / "daw" / "DAWColor.java",
-            staging_root / "controller" / "ableton" / "push" / "PushControllerSetup.java",
-            staging_root / "controller" / "ableton" / "push" / "view" / "SmartView.java",
-            staging_root / "framework" / "view" / "PadMidiNoteTracker.java",
-            staging_root / "bitwig" / "framework" / "hardware" / "HwRelativeKnobImpl.java",
-            staging_root / "bitwig" / "framework" / "daw" / "data" / "CursorTrackImpl.java",
-            staging_root / "controller" / "ableton" / "push" / "view" / "PadViewTaskGuard.java",
-            staging_root / "controller" / "ableton" / "push" / "command" / "trigger" / "PageLeftCommand.java",
-            staging_root / "controller" / "ableton" / "push" / "command" / "trigger" / "PushCursorCommand.java",
-            staging_root / "controller" / "ableton" / "push" / "command" / "trigger" / "PageRightCommand.java",
-            staging_root / "controller" / "ableton" / "push" / "command" / "trigger" / "Push1NavigationContext.java",
-            staging_root / "controller" / "ableton" / "push" / "command" / "trigger" / "Push1DeviceMoveCommand.java",
-            staging_root / "controller" / "ableton" / "push" / "mode" / "device" / "DeviceBrowserMode.java",
-            staging_root / "controller" / "ableton" / "push" / "mode" / "device" / "DeviceChainsMode.java",
-            staging_root / "controller" / "ableton" / "push" / "mode" / "device" / "DeviceLayerDetailsMode.java",
-            staging_root / "controller" / "ableton" / "push" / "controller" / "Push1French.java",
-            staging_root / "framework" / "daw" / "constants" / "TransportConstants.java",
-            staging_root / "controller" / "ableton" / "push" / "mode" / "track" / "MasterMode.java",
-            staging_root / "controller" / "ableton" / "push" / "mode" / "track" / "ClipMode.java",
-            staging_root / "controller" / "ableton" / "push" / "command" / "trigger" / "PlayPositionKnobCommand.java",
-            staging_root / "framework" / "command" / "trigger" / "mode" / "KnobTouchOwner.java",
-            staging_root / "framework" / "command" / "trigger" / "clip" / "NewCommand.java",
-            staging_root / "framework" / "command" / "trigger" / "clip" / "Push1SelectGesture.java",
-            staging_root / "framework" / "mode" / "NoteEditTouchOwner.java",
-        )
-        for required_source in required_sources:
+        for relative_path in REQUIRED_SOURCES:
+            required_source = staging_root / relative_path
             if not required_source.is_file():
-                raise SystemExit(f"Staged patch validation failed: {required_source.relative_to(staging_root)} is missing")
+                raise SystemExit(
+                    "Staged patch validation failed: "
+                    f"{relative_path} is missing"
+                )
 
         backup = Path(temporary) / "mossgrabers-original"
         os.replace(SOURCE_ROOT, backup)

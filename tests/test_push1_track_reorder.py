@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """Regression checks for safe Push 1 track/group reordering."""
 from pathlib import Path
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from patch_manifest import PATCH_STEPS
+
 JAVA = ROOT / "vendor/DrivenByMoss/src/main/java/de/mossgrabers"
 
 
@@ -15,10 +20,10 @@ class Push1TrackReorderTests(unittest.TestCase):
         self.assertNotIn("swapWithNext", patcher)
 
     def test_track_reorder_is_a_single_adapter_patch_not_a_second_command(self):
-        pipeline = (ROOT / "scripts/apply_push1_palette_transactional.py").read_text(encoding="utf-8")
+        patch_names = tuple(step.script for step in PATCH_STEPS)
         patch = (ROOT / "scripts/apply_push1_track_reorder.py").read_text(encoding="utf-8")
-        self.assertIn("apply_push1_track_reorder.py", pipeline)
-        self.assertNotIn("Push1TrackMoveCommand.java", pipeline)
+        self.assertIn("apply_push1_track_reorder.py", patch_names)
+        self.assertNotIn("Push1TrackMoveCommand.java", patch_names)
         self.assertIn("CursorTrackImpl.java", patch)
         self.assertNotIn("PushCursorCommand.java", patch)
 

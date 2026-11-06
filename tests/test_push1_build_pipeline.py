@@ -2,9 +2,14 @@
 """Regression checks for the StrattV4 build and transactional patch pipeline."""
 
 from pathlib import Path
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from patch_manifest import EXPECTED_UPSTREAM, PATCH_STEPS, REQUIRED_SOURCES, resolve_patch_scripts
+
 WORKFLOW = ROOT / ".github/workflows/main.yml"
 PATCHER = ROOT / "scripts/apply_push1_palette_transactional.py"
 
@@ -53,7 +58,8 @@ class Push1BuildPipelineTests(unittest.TestCase):
 
     def test_all_customizations_run_in_staging_before_atomic_swap(self):
         source = PATCHER.read_text(encoding="utf-8")
-        scripts = (
+        scripts = tuple(step.script for step in PATCH_STEPS)
+        expected_scripts = (
             "apply_push1_all_encoder_vu.py",
             "apply_push1_master_display.py",
             "apply_push1_touch_lifecycle.py",
@@ -66,6 +72,7 @@ class Push1BuildPipelineTests(unittest.TestCase):
             "apply_push1_note_edit_touch_owner.py",
             "apply_push1_navigation.py",
             "apply_push1_track_reorder.py",
+            "apply_push1_device_reorder.py",
             "apply_push1_french.py",
             "apply_push1_startup_message.py",
             "apply_push1_long_names.py",
@@ -76,9 +83,12 @@ class Push1BuildPipelineTests(unittest.TestCase):
             "apply_push1_new_scene.py",
             "apply_push1_new_scene_gesture.py",
         )
-        positions = [source.index(name) for name in scripts]
-        self.assertEqual(positions, sorted(positions))
-        run_loop = source.index("for patch_script in PATCH_SCRIPTS:")
+        self.assertEqual(scripts, expected_scripts)
+        self.assertEqual(
+            resolve_patch_scripts(ROOT),
+            tuple(ROOT / "scripts" / name for name in expected_scripts),
+        )
+        run_loop = source.index("for step, patch_script in zip(PATCH_STEPS, PATCH_SCRIPTS):")
         swap = source.index("os.replace(SOURCE_ROOT, backup)")
         install = source.index("os.replace(staging_root, SOURCE_ROOT)")
         restore = source.index("os.replace(backup, SOURCE_ROOT)")
@@ -86,43 +96,32 @@ class Push1BuildPipelineTests(unittest.TestCase):
         self.assertLess(swap, install)
         self.assertLess(install, restore)
         self.assertIn("if revision != EXPECTED_UPSTREAM:", source)
-        self.assertIn('"SmartView.java"', source)
-        self.assertIn('"KnobTouchOwner.java"', source)
-        self.assertIn('"Push1SelectGesture.java"', source)
+        self.assertEqual(EXPECTED_UPSTREAM, "013620c1330cdcf896e96ef8fdc8a2123e4fce6a")
+        self.assertIn("controller/ableton/push/view/SmartView.java", REQUIRED_SOURCES)
+        self.assertIn("framework/command/trigger/mode/KnobTouchOwner.java", REQUIRED_SOURCES)
+        self.assertIn("framework/command/trigger/clip/Push1SelectGesture.java", REQUIRED_SOURCES)
         self.assertIn('"status", "--porcelain", "--", "src/main/java/de/mossgrabers"', source)
         self.assertIn("Refusing to patch a modified DrivenByMoss Java source tree", source)
-        self.assertNotIn("CheatView.java", source)
-        self.assertNotIn("apply_push1_cheat.py", source)
+        self.assertNotIn("CheatView.java", REQUIRED_SOURCES)
+        self.assertNotIn("apply_push1_cheat.py", scripts)
         self.assertIn("except Exception:", source)
 
-    def test_transactional_pipeline_patch_scripts_are_unique(self):
-        source = PATCHER.read_text(encoding="utf-8")
-        scripts = (
-            "apply_push1_all_encoder_vu.py",
-            "apply_push1_master_display.py",
-            "apply_push1_touch_lifecycle.py",
-            "apply_push1_palette.py",
-            "apply_push1_smart.py",
-            "apply_push1_midi_lifecycle.py",
-            "apply_push1_poly_sequencer_lifecycle.py",
-            "apply_push1_note_sequencer_lifecycle.py",
-            "apply_push1_modifier_gestures.py",
-            "apply_push1_note_edit_touch_owner.py",
-            "apply_push1_navigation.py",
-            "apply_push1_french.py",
-            "apply_push1_startup_message.py",
-            "apply_push1_long_names.py",
-            "apply_push1_clip_accent.py",
-            "apply_push1_playhead.py",
-            "apply_push1_small_knob_guard.py",
-            "apply_push1_encoder_touch.py",
-            "apply_push1_new_scene.py",
-            "apply_push1_new_scene_gesture.py",
-        )
-        for name in scripts:
-            with self.subTest(script=name):
-                self.assertEqual(source.count(f'"{name}"'), 1)
+    def test_transactional_pipeline_patch_scripts_are_unique_and_present(self):
+        scripts = tuple(step.script for step in PATCH_STEPS)
+        self.assertEqual(len(scripts), len(set(scripts)))
+        self.assertEqual(len(resolve_patch_scripts(ROOT)), len(PATCH_STEPS))
+        for step in PATCH_STEPS:
+            with self.subTest(script=step.script):
+                self.assertTrue((ROOT / "scripts" / step.script).is_file())
+                self.assertTrue(step.purpose.strip())
 
+    def test_required_source_manifest_contains_unique_safe_relative_paths(self):
+        self.assertEqual(len(REQUIRED_SOURCES), len(set(REQUIRED_SOURCES)))
+        for source in REQUIRED_SOURCES:
+            with self.subTest(source=source):
+                path = Path(source)
+                self.assertFalse(path.is_absolute())
+                self.assertNotIn("..", path.parts)
 
     def test_shared_patch_helper_is_used_by_every_exact_anchor_patch(self):
         scripts = (
@@ -166,11 +165,11 @@ class Push1BuildPipelineTests(unittest.TestCase):
         self.assertNotIn("MICHA EST TROP", source)
 
     def test_legacy_encoder_guards_and_touch_lifecycle_are_part_of_every_build(self):
-        patcher = PATCHER.read_text(encoding="utf-8")
-        self.assertLess(patcher.index("apply_push1_all_encoder_vu.py"), patcher.index("apply_push1_touch_lifecycle.py"))
-        self.assertLess(patcher.index("apply_push1_touch_lifecycle.py"), patcher.index("apply_push1_palette.py"))
-        self.assertNotIn("apply_push1_vu_startup_state.py", patcher)
-        self.assertIn("HwRelativeKnobImpl.java", patcher)
+        patch_names = tuple(step.script for step in PATCH_STEPS)
+        self.assertLess(patch_names.index("apply_push1_all_encoder_vu.py"), patch_names.index("apply_push1_touch_lifecycle.py"))
+        self.assertLess(patch_names.index("apply_push1_touch_lifecycle.py"), patch_names.index("apply_push1_palette.py"))
+        self.assertNotIn("apply_push1_vu_startup_state.py", patch_names)
+        self.assertIn("bitwig/framework/hardware/HwRelativeKnobImpl.java", REQUIRED_SOURCES)
         encoder = (ROOT / "scripts/apply_push1_all_encoder_vu.py").read_text(encoding="utf-8")
         touch = (ROOT / "scripts/apply_push1_touch_lifecycle.py").read_text(encoding="utf-8")
         self.assertIn("this.touchCommand != null && !this.isTouched ()", encoder)
@@ -231,19 +230,19 @@ class Push1BuildPipelineTests(unittest.TestCase):
 
     def test_async_view_task_guard_is_compiled_and_required_in_staging(self):
         workflow = WORKFLOW.read_text(encoding="utf-8")
-        patcher = PATCHER.read_text(encoding="utf-8")
-        self.assertIn("PadViewTaskGuard.java", workflow)
+        patch_names = tuple(step.script for step in PATCH_STEPS)
+        self.assertIn("controller/ableton/push/view/PadViewTaskGuard.java", REQUIRED_SOURCES)
         self.assertIn("PadViewTaskGuardTest.java", workflow)
-        self.assertIn("PadViewTaskGuard.java", patcher)
         self.assertIn("PadViewTaskGuardTest", workflow)
+        self.assertIn("framework/command/trigger/clip/Push1SelectGesture.java", REQUIRED_SOURCES)
         self.assertIn("Push1SelectGestureTest.java", workflow)
         self.assertIn("Push1SelectGestureTest", workflow)
-        self.assertIn("NoteEditTouchOwner.java", workflow)
+        self.assertIn("framework/mode/NoteEditTouchOwner.java", REQUIRED_SOURCES)
         self.assertIn("NoteEditTouchOwnerTest.java", workflow)
-        self.assertIn("apply_push1_poly_sequencer_lifecycle.py", patcher)
-        self.assertIn("apply_push1_note_sequencer_lifecycle.py", patcher)
-        self.assertIn("apply_push1_modifier_gestures.py", patcher)
-        self.assertIn("apply_push1_note_edit_touch_owner.py", patcher)
+        self.assertIn("apply_push1_poly_sequencer_lifecycle.py", patch_names)
+        self.assertIn("apply_push1_note_sequencer_lifecycle.py", patch_names)
+        self.assertIn("apply_push1_modifier_gestures.py", patch_names)
+        self.assertIn("apply_push1_note_edit_touch_owner.py", patch_names)
 
 
 if __name__ == "__main__":

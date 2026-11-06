@@ -2,20 +2,27 @@
 """Regression checks for the additive Push 1 device-reordering gesture."""
 
 from pathlib import Path
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-PATCHER = ROOT / "scripts/apply_push1_palette_transactional.py"
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from patch_manifest import PATCH_STEPS, REQUIRED_SOURCES
+
 SCRIPT = ROOT / "scripts/apply_push1_device_reorder.py"
 
 
 class Push1DeviceReorderTests(unittest.TestCase):
     def test_reorder_patch_runs_after_existing_device_navigation(self):
-        patcher = PATCHER.read_text(encoding="utf-8")
-        navigation = patcher.index('"apply_push1_navigation.py"')
-        reorder = patcher.index('"apply_push1_device_reorder.py"')
+        patch_names = tuple(step.script for step in PATCH_STEPS)
+        navigation = patch_names.index("apply_push1_navigation.py")
+        reorder = patch_names.index("apply_push1_device_reorder.py")
         self.assertLess(navigation, reorder)
-        self.assertIn('"Push1DeviceMoveCommand.java"', patcher)
+        self.assertIn(
+            "controller/ableton/push/command/trigger/Push1DeviceMoveCommand.java",
+            REQUIRED_SOURCES,
+        )
 
     def test_new_helper_is_generated_without_replacing_existing_mappings(self):
         source = SCRIPT.read_text(encoding="utf-8")
