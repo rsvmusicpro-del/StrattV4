@@ -34,16 +34,31 @@ class Push1InOutNavigationTests(unittest.TestCase):
                 self.assertIn(sequencer_action, source)
                 self.assertIn("public boolean canNavigate ()", source)
 
-    def test_cursor_arrows_preserve_driven_by_moss_track_mode_dispatch(self):
+    def test_shift_cursor_arrows_do_not_navigate_tracks_but_plain_pages_remain(self):
         source = PUSH_CURSOR.read_text(encoding="utf-8")
         left = source[source.index("protected void scrollLeft"):source.index("protected void scrollRight")]
         right = source[source.index("protected void scrollRight"):source.index("protected ISceneBank getSceneBank")]
-        self.assertIn("activeMode.selectPreviousItemPage ()", left)
-        self.assertIn("activeMode.selectNextItemPage ()", right)
-        self.assertNotIn("trackBank.selectPreviousItem ()", left)
-        self.assertNotIn("trackBank.selectNextItem ()", right)
-        self.assertNotIn("trackBank.selectPreviousPage ()", left)
-        self.assertNotIn("trackBank.selectNextPage ()", right)
+
+        for section, action in (
+            (left, "activeMode.selectPreviousItemPage ()"),
+            (right, "activeMode.selectNextItemPage ()"),
+        ):
+            with self.subTest(direction="left" if section is left else "right"):
+                self.assertIn("if (this.isShiftTrackNavigationDisabled ())", section)
+                self.assertLess(section.index("isShiftTrackNavigationDisabled ()"), section.index(action))
+                self.assertIn(action, section)
+
+        guard = source[source.index("private boolean isShiftTrackNavigationDisabled"):source.index("private boolean isScenePlay")]
+        self.assertIn("this.surface.isShiftPressed ()", guard)
+        self.assertIn("activeModeID == Modes.SESSION", guard)
+        self.assertIn("Modes.isTrackMode (activeModeID)", guard)
+
+        update = source[source.index("protected void updateArrowStates"):source.index("private boolean isShiftTrackNavigationDisabled")]
+        self.assertIn("if (this.isShiftTrackNavigationDisabled ())", update)
+        self.assertIn("this.canScrollLeft = false;", update)
+        self.assertIn("this.canScrollRight = false;", update)
+        self.assertIn("shiftPressed ? mode.hasPreviousItem () : mode.hasPreviousItemPage ()", update)
+        self.assertIn("shiftPressed ? mode.hasNextItem () : mode.hasNextItemPage ()", update)
 
     def test_cursor_leds_preserve_driven_by_moss_shift_semantics(self):
         source = PUSH_CURSOR.read_text(encoding="utf-8")
@@ -87,7 +102,8 @@ class Push1InOutNavigationTests(unittest.TestCase):
         self.assertIn("this.siblingTrackBank.cursorIndex ().get ()", cursor_track)
         self.assertIn("this.siblingTrackBank.getItemAt (targetIndex)", cursor_track)
         self.assertNotIn("largeTrackBank", cursor_track)
-        self.assertNotIn("PushCursorCommand.java", patcher)
+        self.assertIn("PushCursorCommand.java", patcher)
+        self.assertIn("patch_shift_track_cursor_arrows ()", patcher)
 
     def test_track_move_availability_observables_are_interested_during_init(self):
         source = (ROOT / "bitwig/framework/daw/data/CursorTrackImpl.java").read_text(encoding="utf-8")

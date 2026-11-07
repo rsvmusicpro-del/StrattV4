@@ -40,3 +40,7 @@ Sur Push 1 avec Bitwig Studio 4.3.10 :
 7. Répéter dans une chaîne imbriquée/Rack si ce contexte est exposé par le projet.
 
 Un build CI réussi ne remplace pas cette recette sur le matériel physique.
+
+## Exclusivité du déplacement des pistes
+
+Le réordonnancement des pistes et groupes de pistes est affecté exclusivement à **SHIFT + IN / OUT**. Dans les modes Session et Track, **SHIFT + flèche gauche/droite** ne déclenche plus de navigation horizontale et les deux LED correspondantes restent éteintes. La navigation horizontale sans SHIFT est conservée ; la navigation horizontale des modes Device hors contexte de piste n'est pas modifiée. Le réordonnancement des devices reste affecté à SHIFT + IN / OUT en mode Device.

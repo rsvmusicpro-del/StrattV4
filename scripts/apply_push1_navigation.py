@@ -13,6 +13,140 @@ def replace_once(source: str, old: str, new: str, label: str) -> str:
     return source.replace(old, new, 1)
 
 
+def patch_shift_track_cursor_arrows() -> None:
+    """Disable Shift + horizontal cursor navigation in track/session modes.
+
+    Track and group-track reordering is exclusively handled by Shift + In/Out.
+    Plain horizontal page navigation and Device-mode cursor navigation remain.
+    """
+    path = ROOT / "controller/ableton/push/command/trigger/PushCursorCommand.java"
+    source = path.read_text(encoding="utf-8")
+
+    source = replace_once(
+        source,
+        "import de.mossgrabers.framework.featuregroup.IMode;\\n",
+        "import de.mossgrabers.framework.featuregroup.IMode;\\n"
+        "import de.mossgrabers.framework.mode.Modes;\\n",
+        "PushCursorCommand track-mode guard import",
+    )
+    source = replace_once(
+        source,
+        """    @Override
+    protected void scrollLeft ()
+    {
+        final IMode activeMode = this.surface.getModeManager ().getActive ();
+        if (activeMode != null)
+            activeMode.selectPreviousItemPage ();
+    }
+""",
+        """    @Override
+    protected void scrollLeft ()
+    {
+        if (this.isShiftTrackNavigationDisabled ())
+            return;
+
+        final IMode activeMode = this.surface.getModeManager ().getActive ();
+        if (activeMode != null)
+            activeMode.selectPreviousItemPage ();
+    }
+""",
+        "PushCursorCommand Shift + Left track navigation guard",
+    )
+    source = replace_once(
+        source,
+        """    @Override
+    protected void scrollRight ()
+    {
+        final IMode activeMode = this.surface.getModeManager ().getActive ();
+        if (activeMode != null)
+            activeMode.selectNextItemPage ();
+    }
+""",
+        """    @Override
+    protected void scrollRight ()
+    {
+        if (this.isShiftTrackNavigationDisabled ())
+            return;
+
+        final IMode activeMode = this.surface.getModeManager ().getActive ();
+        if (activeMode != null)
+            activeMode.selectNextItemPage ();
+    }
+""",
+        "PushCursorCommand Shift + Right track navigation guard",
+    )
+    source = replace_once(
+        source,
+        """    @Override
+    protected void updateArrowStates ()
+    {
+        final ISceneBank sceneBank = this.getSceneBank ();
+        this.canScrollUp = sceneBank.canScrollBackwards ();
+        this.canScrollDown = sceneBank.canScrollForwards ();
+
+        final IMode mode = this.surface.getModeManager ().getActive ();
+        final boolean shiftPressed = this.surface.isShiftPressed ();
+        this.canScrollLeft = mode != null && (shiftPressed ? mode.hasPreviousItem () : mode.hasPreviousItemPage ());
+        this.canScrollRight = mode != null && (shiftPressed ? mode.hasNextItem () : mode.hasNextItemPage ());
+    }
+""",
+        """    @Override
+    protected void updateArrowStates ()
+    {
+        final ISceneBank sceneBank = this.getSceneBank ();
+        this.canScrollUp = sceneBank.canScrollBackwards ();
+        this.canScrollDown = sceneBank.canScrollForwards ();
+
+        final IMode mode = this.surface.getModeManager ().getActive ();
+        final boolean shiftPressed = this.surface.isShiftPressed ();
+        if (this.isShiftTrackNavigationDisabled ())
+        {
+            this.canScrollLeft = false;
+            this.canScrollRight = false;
+        }
+        else
+        {
+            this.canScrollLeft = mode != null && (shiftPressed ? mode.hasPreviousItem () : mode.hasPreviousItemPage ());
+            this.canScrollRight = mode != null && (shiftPressed ? mode.hasNextItem () : mode.hasNextItemPage ());
+        }
+    }
+""",
+        "PushCursorCommand Shift + track arrow LED state",
+    )
+    source = replace_once(
+        source,
+        "    private boolean isScenePlay ()\\n",
+        """    /**
+     * Track/group movement is assigned exclusively to Shift + In/Out.
+     * Suppress the horizontal cursor gesture and its LEDs in track contexts.
+     *
+     * @return True if Shift + Left/Right must not navigate tracks
+     */
+    private boolean isShiftTrackNavigationDisabled ()
+    {
+        final Modes activeModeID = this.surface.getModeManager ().getActiveID ();
+        return this.surface.isShiftPressed () && activeModeID != null
+                && (activeModeID == Modes.SESSION || Modes.isTrackMode (activeModeID));
+    }
+
+
+    private boolean isScenePlay ()
+""",
+        "PushCursorCommand Shift + track navigation predicate",
+    )
+
+    for token in (
+        "this.isShiftTrackNavigationDisabled ()",
+        "activeModeID == Modes.SESSION",
+        "Modes.isTrackMode (activeModeID)",
+        "this.canScrollLeft = false;",
+        "this.canScrollRight = false;",
+    ):
+        if token not in source:
+            raise SystemExit(f"PushCursorCommand: missing Shift + track-navigation postcondition {token}")
+    path.write_text(source, encoding="utf-8")
+
+
 def patch_page_command(command_name: str, direction: str) -> None:
     path = ROOT / "controller/ableton/push/command/trigger" / f"{command_name}.java"
     source = path.read_text(encoding="utf-8")
@@ -429,6 +563,7 @@ cursor_track_path.write_text(cursor_track, encoding="utf-8")
 # DeviceChainsMode gets explicit pages for Rack chains, eight entries per page.
 patch_page_command("PageLeftCommand", "left")
 patch_page_command("PageRightCommand", "right")
+patch_shift_track_cursor_arrows ()
 
 chains_path = ROOT / "controller/ableton/push/mode/device/DeviceChainsMode.java"
 chains = chains_path.read_text(encoding="utf-8")
@@ -982,4 +1117,9 @@ if "pageLeftCommand::canNavigate" not in setup or "pageRightCommand::canNavigate
 if not context_path.is_file() or "static boolean isDeviceNavigationMode" not in context_path.read_text(encoding="utf-8"):
     raise SystemExit("Push1NavigationContext: shared Device mode helper is missing")
 
-print("StrattV4 Push 1 In/Out navigation applied: safe sibling-track moves, device reorder, Browser columns, Device/parameter banks, Rack chains and sequencer pages.")
+cursor_command_source = (ROOT / "controller/ableton/push/command/trigger/PushCursorCommand.java").read_text(encoding="utf-8")
+for token in ("isShiftTrackNavigationDisabled ()", "activeModeID == Modes.SESSION", "Modes.isTrackMode (activeModeID)"):
+    if token not in cursor_command_source:
+        raise SystemExit(f"PushCursorCommand: Shift + track-arrow guard missing: {token}")
+
+print("StrattV4 Push 1 navigation applied: Shift + In/Out owns track/group/device moves; Shift + Left/Right is disabled for track contexts; other navigation is preserved.")
