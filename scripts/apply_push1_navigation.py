@@ -24,9 +24,9 @@ def patch_shift_track_cursor_arrows() -> None:
 
     source = replace_once(
         source,
-        "import de.mossgrabers.framework.featuregroup.IMode;\\n",
-        "import de.mossgrabers.framework.featuregroup.IMode;\\n"
-        "import de.mossgrabers.framework.mode.Modes;\\n",
+        "import de.mossgrabers.framework.featuregroup.IMode;\n",
+        "import de.mossgrabers.framework.featuregroup.IMode;\n"
+        "import de.mossgrabers.framework.mode.Modes;\n",
         "PushCursorCommand track-mode guard import",
     )
     source = replace_once(
@@ -115,7 +115,7 @@ def patch_shift_track_cursor_arrows() -> None:
     )
     source = replace_once(
         source,
-        "    private boolean isScenePlay ()\\n",
+        "    private boolean isScenePlay ()\n",
         """    /**
      * Track/group movement is assigned exclusively to Shift + In/Out.
      * Suppress the horizontal cursor gesture and its LEDs in track contexts.

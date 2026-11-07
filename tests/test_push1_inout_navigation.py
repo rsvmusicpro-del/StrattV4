@@ -15,6 +15,13 @@ CONTEXT = COMMANDS / "Push1NavigationContext.java"
 
 
 class Push1InOutNavigationTests(unittest.TestCase):
+    def test_shift_arrow_patcher_uses_real_newline_anchors(self):
+        patcher = (Path("scripts") / "apply_push1_navigation.py").read_text(encoding="utf-8")
+        self.assertIn(r'"import de.mossgrabers.framework.featuregroup.IMode;\n"', patcher)
+        self.assertIn(r'"    private boolean isScenePlay ()\n"', patcher)
+        self.assertNotIn(r'IMode;\\n"', patcher)
+
+
     def test_left_and_right_commands_are_contextual(self):
         left = (COMMANDS / "PageLeftCommand.java").read_text(encoding="utf-8")
         right = (COMMANDS / "PageRightCommand.java").read_text(encoding="utf-8")
