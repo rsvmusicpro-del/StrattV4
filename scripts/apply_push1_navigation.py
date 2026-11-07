@@ -195,10 +195,10 @@ def patch_page_command(command_name: str, direction: str) -> None:
     track_move_call = (
         "        if (Push1TrackMoveCommand.executeIfRequested (this.model, this.surface, event, "
         + ("true" if move_left else "false")
-        + "))\\n"
-        "            return;\\n\\n"
+        + "))\n"
+        "            return;\n\n"
     )
-    execute_anchor = "    public void execute (final ButtonEvent event, final int velocity)\\n    {\\n"
+    execute_anchor = "    public void execute (final ButtonEvent event, final int velocity)\n    {\n"
     replacement = replace_once(
         replacement,
         execute_anchor,
