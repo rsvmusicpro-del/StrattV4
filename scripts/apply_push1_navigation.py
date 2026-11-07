@@ -191,109 +191,22 @@ def patch_page_command(command_name: str, direction: str) -> None:
             sequencerView.onRight (event);
     }
 """
+    move_left = direction == "left"
+    track_move_call = (
+        "        if (Push1TrackMoveCommand.executeIfRequested (this.model, this.surface, event, "
+        + ("true" if move_left else "false")
+        + "))\\n"
+        "            return;\\n\\n"
+    )
+    execute_anchor = "    public void execute (final ButtonEvent event, final int velocity)\\n    {\\n"
+    replacement = replace_once(
+        replacement,
+        execute_anchor,
+        execute_anchor + track_move_call,
+        f"{command_name} Shift + In/Out track move",
+    )
     source = replace_once(source, old_execute, replacement, f"{command_name} context-aware routing")
     path.write_text(source, encoding="utf-8")
-
-
-# The physical arrow keys navigate tracks one at a time; In/Out (Page Left/Right)
-# remain dedicated to bank/page navigation. Browser arrows retain content-type navigation.
-cursor_path = ROOT / "controller/ableton/push/command/trigger/PushCursorCommand.java"
-cursor = cursor_path.read_text(encoding="utf-8")
-cursor = replace_once(
-    cursor,
-    "import de.mossgrabers.framework.view.Views;\n",
-    "import de.mossgrabers.framework.mode.Modes;\n"
-    "import de.mossgrabers.framework.view.Views;\n",
-    "PushCursorCommand Browser mode import",
-)
-cursor = replace_once(
-    cursor,
-    """    @Override
-    protected void scrollLeft ()
-    {
-        final IMode activeMode = this.surface.getModeManager ().getActive ();
-        if (activeMode != null)
-            activeMode.selectPreviousItemPage ();
-    }
-""",
-    """    @Override
-    protected void scrollLeft ()
-    {
-        if (this.surface.getModeManager ().isActive (Modes.BROWSER))
-        {
-            final IMode activeMode = this.surface.getModeManager ().getActive ();
-            if (activeMode != null)
-                activeMode.selectPreviousItemPage ();
-            return;
-        }
-
-        final var trackBank = this.model.getCurrentTrackBank ();
-        if (this.surface.isShiftPressed ())
-            trackBank.selectPreviousPage ();
-        else
-            trackBank.selectPreviousItem ();
-    }
-""",
-    "Push left arrow single-track navigation",
-)
-cursor = replace_once(
-    cursor,
-    """    @Override
-    protected void scrollRight ()
-    {
-        final IMode activeMode = this.surface.getModeManager ().getActive ();
-        if (activeMode != null)
-            activeMode.selectNextItemPage ();
-    }
-""",
-    """    @Override
-    protected void scrollRight ()
-    {
-        if (this.surface.getModeManager ().isActive (Modes.BROWSER))
-        {
-            final IMode activeMode = this.surface.getModeManager ().getActive ();
-            if (activeMode != null)
-                activeMode.selectNextItemPage ();
-            return;
-        }
-
-        final var trackBank = this.model.getCurrentTrackBank ();
-        if (this.surface.isShiftPressed ())
-            trackBank.selectNextPage ();
-        else
-            trackBank.selectNextItem ();
-    }
-""",
-    "Push right arrow single-track navigation",
-)
-cursor = replace_once(
-    cursor,
-    """        final IMode mode = this.surface.getModeManager ().getActive ();
-        final boolean shiftPressed = this.surface.isShiftPressed ();
-        this.canScrollLeft = mode != null && (shiftPressed ? mode.hasPreviousItem () : mode.hasPreviousItemPage ());
-        this.canScrollRight = mode != null && (shiftPressed ? mode.hasNextItem () : mode.hasNextItemPage ());
-""",
-    """        final IMode mode = this.surface.getModeManager ().getActive ();
-        final boolean shiftPressed = this.surface.isShiftPressed ();
-        if (this.surface.getModeManager ().isActive (Modes.BROWSER))
-        {
-            this.canScrollLeft = mode != null && mode.hasPreviousItemPage ();
-            this.canScrollRight = mode != null && mode.hasNextItemPage ();
-        }
-        else
-        {
-            final var trackBank = this.model.getCurrentTrackBank ();
-            this.canScrollLeft = shiftPressed ? trackBank.canScrollPageBackwards () : trackBank.canScrollBackwards ();
-            this.canScrollRight = shiftPressed ? trackBank.canScrollPageForwards () : trackBank.canScrollForwards ();
-        }
-
-        final boolean scenePageNavigation = shiftPressed || this.isScenePlay ();
-        this.canScrollUp = scenePageNavigation ? sceneBank.canScrollPageBackwards () : sceneBank.canScrollBackwards ();
-        this.canScrollDown = scenePageNavigation ? sceneBank.canScrollPageForwards () : sceneBank.canScrollForwards ();
-""",
-    "Push arrow LED states reflect track or Browser action",
-)
-cursor_path.write_text(cursor, encoding="utf-8")
 
 
 # Shared context helper avoids identical Device-mode checks in both page commands.
@@ -324,6 +237,189 @@ final class Push1NavigationContext
 }
 """, encoding="utf-8")
 
+
+# Track movement: use the selected cursor track and its same-level siblings.
+# This avoids the historical flat-bank bug where a Group Track's child could be
+# mistaken for the adjacent top-level track.
+TRACK_MOVE_HELPER_SOURCE = r"""// Written for StrattV4.
+package de.mossgrabers.controller.ableton.push.command.trigger;
+
+import de.mossgrabers.controller.ableton.push.controller.PushControlSurface;
+import de.mossgrabers.framework.daw.IModel;
+import de.mossgrabers.framework.daw.data.ICursorTrack;
+import de.mossgrabers.framework.featuregroup.ModeManager;
+import de.mossgrabers.framework.mode.Modes;
+import de.mossgrabers.framework.utils.ButtonEvent;
+
+
+/**
+ * Additive Shift + In/Out gesture for moving the selected track by one sibling.
+ */
+final class Push1TrackMoveCommand
+{
+    private Push1TrackMoveCommand ()
+    {
+        // Utility class.
+    }
+
+
+    /**
+     * Execute only in Session or a track/mix mode. Device mode is handled by
+     * Push1DeviceMoveCommand, which is inserted ahead of this command.
+     *
+     * @param model The DAW model
+     * @param surface The Push control surface
+     * @param event The button event
+     * @param moveLeft True to move one sibling left, false to move right
+     * @return True if the Shift + In/Out chord is consumed
+     */
+    static boolean executeIfRequested (final IModel model, final PushControlSurface surface, final ButtonEvent event, final boolean moveLeft)
+    {
+        if (!surface.isShiftPressed ())
+            return false;
+
+        final ModeManager modeManager = surface.getModeManager ();
+        final Modes activeModeID = modeManager.getActiveID ();
+        if (activeModeID != Modes.SESSION && !Modes.isTrackMode (activeModeID))
+            return false;
+
+        if (event == ButtonEvent.DOWN)
+        {
+            final ICursorTrack cursorTrack = model.getCursorTrack ();
+            if (cursorTrack.doesExist ())
+            {
+                if (moveLeft && cursorTrack.canSelectPrevious ())
+                    cursorTrack.swapWithPrevious ();
+                else if (!moveLeft && cursorTrack.canSelectNext ())
+                    cursorTrack.swapWithNext ();
+            }
+        }
+
+        // Consume the chord even at a sibling boundary; do not fall through
+        // into unrelated page navigation while Shift is held.
+        return true;
+    }
+}
+"""
+
+track_helper_path = ROOT / "controller/ableton/push/command/trigger/Push1TrackMoveCommand.java"
+if track_helper_path.exists():
+    raise SystemExit(f"Refusing to overwrite an existing source: {track_helper_path}")
+track_helper_path.write_text(TRACK_MOVE_HELPER_SOURCE, encoding="utf-8")
+
+cursor_track_path = ROOT / "bitwig/framework/daw/data/CursorTrackImpl.java"
+cursor_track = cursor_track_path.read_text(encoding="utf-8")
+cursor_track = replace_once(
+    cursor_track,
+    "import de.mossgrabers.bitwig.framework.daw.HostImpl;\n",
+    "",
+    "Remove flat-bank HostImpl dependency",
+)
+cursor_track = replace_once(
+    cursor_track,
+    "    private final TrackBank            largeTrackBank;\n",
+    "    private final TrackBank            siblingTrackBank;\n",
+    "Use cursor-relative sibling bank",
+)
+cursor_track = replace_once(
+    cursor_track,
+    "        this.largeTrackBank = ((HostImpl) host).getControllerHost ().createTrackBank (NUM_TRACKS_LARGE_BANK, 0, 0, true);\n",
+    "        this.siblingTrackBank = cursorTrack.createSiblingsTrackBank (NUM_TRACKS_LARGE_BANK, 0, 0, true, false);\n"
+    "        this.siblingTrackBank.cursorIndex ().markInterested ();\n",
+    "Create same-level sibling bank including effect tracks",
+)
+old_previous = """    @Override
+    public void swapWithPrevious ()
+    {
+        final ITrackBank tb = this.model.getCurrentTrackBank ();
+        if (tb == null)
+            return;
+        final int position = this.getPosition ();
+        if (position == 0)
+            return;
+        final Track prevTrack = this.largeTrackBank.getItemAt (position - 1);
+        this.track.afterTrackInsertionPoint ().moveTracks (prevTrack);
+        prevTrack.selectInEditor ();
+    }
+"""
+new_previous = """    @Override
+    public void swapWithPrevious ()
+    {
+        final ITrackBank tb = this.model.getCurrentTrackBank ();
+        if (tb == null || !this.canSelectPrevious ())
+            return;
+        final Track prevTrack = this.getSiblingTrackAtCursorOffset (-1);
+        if (prevTrack == null)
+            return;
+        this.track.afterTrackInsertionPoint ().moveTracks (prevTrack);
+        prevTrack.selectInEditor ();
+    }
+"""
+cursor_track = replace_once(cursor_track, old_previous, new_previous, "Previous sibling track move")
+old_next = """    @Override
+    public void swapWithNext ()
+    {
+        final ITrackBank tb = this.model.getCurrentTrackBank ();
+        if (tb == null)
+            return;
+        final int position = this.getPosition ();
+        if (position >= NUM_TRACKS_LARGE_BANK - 1)
+            return;
+        final Track nextTrack = this.largeTrackBank.getItemAt (position + 1);
+        this.track.beforeTrackInsertionPoint ().moveTracks (nextTrack);
+        nextTrack.selectInEditor ();
+    }
+"""
+new_next = """    @Override
+    public void swapWithNext ()
+    {
+        final ITrackBank tb = this.model.getCurrentTrackBank ();
+        if (tb == null || !this.canSelectNext ())
+            return;
+        final Track nextTrack = this.getSiblingTrackAtCursorOffset (1);
+        if (nextTrack == null)
+            return;
+        this.track.beforeTrackInsertionPoint ().moveTracks (nextTrack);
+        nextTrack.selectInEditor ();
+    }
+
+
+    /**
+     * Resolve a neighbour in the cursor track's sibling bank, never in the
+     * flattened project-wide track list.
+     *
+     * @param offset -1 for the previous sibling, +1 for the next sibling
+     * @return The existing sibling, or null if the cursor/boundary is invalid
+     */
+    private Track getSiblingTrackAtCursorOffset (final int offset)
+    {
+        final int cursorIndex = this.siblingTrackBank.cursorIndex ().get ();
+        if (cursorIndex < 0 || cursorIndex >= NUM_TRACKS_LARGE_BANK)
+            return null;
+
+        final int targetIndex = cursorIndex + offset;
+        if (targetIndex < 0 || targetIndex >= NUM_TRACKS_LARGE_BANK)
+            return null;
+
+        return this.siblingTrackBank.getItemAt (targetIndex);
+    }
+"""
+cursor_track = replace_once(cursor_track, old_next, new_next, "Next sibling track move and resolver")
+if ("largeTrackBank" in cursor_track || "HostImpl" in cursor_track):
+    raise SystemExit("Flat global track-bank implementation remains")
+for token in (
+    "createSiblingsTrackBank (NUM_TRACKS_LARGE_BANK, 0, 0, true, false)",
+    "siblingTrackBank.cursorIndex ().markInterested ()",
+    "this.siblingTrackBank.cursorIndex ().get ()",
+    "this.siblingTrackBank.getItemAt (targetIndex)",
+    "!this.canSelectPrevious ()",
+    "!this.canSelectNext ()",
+    "this.track.afterTrackInsertionPoint ().moveTracks (prevTrack)",
+    "this.track.beforeTrackInsertionPoint ().moveTracks (nextTrack)",
+):
+    if token not in cursor_track:
+        raise SystemExit(f"CursorTrackImpl sibling-move postcondition missing: {token}")
+cursor_track_path.write_text(cursor_track, encoding="utf-8")
 
 # Device-mode In/Out: DeviceParamsMode already pages device and parameter banks.
 # DeviceChainsMode gets explicit pages for Rack chains, eight entries per page.
@@ -828,6 +924,29 @@ for page_source in (page_left_source, page_right_source):
     if "Views.SESSION" in page_source or "selectPreviousPage ()" in page_source or "selectNextPage ()" in page_source:
         raise SystemExit("Page commands: redundant Session page navigation remains")
 
+track_helper_source = track_helper_path.read_text(encoding="utf-8")
+for token in (
+    "Modes.SESSION",
+    "Modes.isTrackMode (activeModeID)",
+    "surface.isShiftPressed ()",
+    "cursorTrack.swapWithPrevious ()",
+    "cursorTrack.swapWithNext ()",
+    "cursorTrack.canSelectPrevious ()",
+    "cursorTrack.canSelectNext ()",
+    "return true;",
+):
+    if token not in track_helper_source:
+        raise SystemExit(f"Push1TrackMoveCommand: missing safety postcondition {token}")
+
+for command_name in ("PageLeftCommand.java", "PageRightCommand.java"):
+    page_source = (ROOT / "controller/ableton/push/command/trigger" / command_name).read_text(encoding="utf-8")
+    if "Push1TrackMoveCommand.executeIfRequested" not in page_source:
+        raise SystemExit(f"{command_name}: Shift + In/Out track move was not routed")
+
+cursor_track_source = cursor_track_path.read_text(encoding="utf-8")
+if "largeTrackBank" in cursor_track_source or "getPosition () - 1" in cursor_track_source or "getPosition () + 1" in cursor_track_source:
+    raise SystemExit("CursorTrackImpl: unsafe flat-bank track-neighbour lookup remains")
+
 updated_browser = browser_path.read_text(encoding="utf-8")
 for token in ("displayColumnOffset", "canScrollFilterColumnsLeft", "canScrollFilterColumnsRight", "changeFilterColumnValue"):
     if token not in updated_browser:
@@ -856,29 +975,7 @@ if "super.selectPreviousItemPage ()" in device_params or "super.selectNextItemPa
 if "pageLeftCommand::canNavigate" not in setup or "pageRightCommand::canNavigate" not in setup:
     raise SystemExit("PushControllerSetup: In/Out LED state is not linked to command availability")
 
-cursor = cursor_path.read_text(encoding="utf-8")
-for token in (
-    "final var trackBank = this.model.getCurrentTrackBank ()",
-    "trackBank.selectPreviousItem ()",
-    "trackBank.selectNextItem ()",
-    "trackBank.canScrollBackwards ()",
-    "trackBank.canScrollForwards ()",
-    "trackBank.selectPreviousPage ()",
-    "trackBank.selectNextPage ()",
-    "trackBank.canScrollPageBackwards ()",
-    "trackBank.canScrollPageForwards ()",
-    "sceneBank.canScrollPageBackwards ()",
-    "sceneBank.canScrollPageForwards ()",
-    "Modes.BROWSER",
-):
-    if token not in cursor:
-        raise SystemExit(f"PushCursorCommand: missing arrow navigation postcondition {token}")
-if "activeMode.selectPreviousItemPage ()" not in cursor or "activeMode.selectNextItemPage ()" not in cursor:
-    raise SystemExit("PushCursorCommand: Browser content-type navigation was not preserved")
-if "isShiftPressed" not in cursor[cursor.index("protected void updateArrowStates"):]:
-    raise SystemExit("PushCursorCommand: arrow LED state does not reflect Shift page navigation")
-
 if not context_path.is_file() or "static boolean isDeviceNavigationMode" not in context_path.read_text(encoding="utf-8"):
     raise SystemExit("Push1NavigationContext: shared Device mode helper is missing")
 
-print("StrattV4 Push 1 In/Out navigation applied: Browser columns, Device/parameter banks, Rack chains, Session pages and sequencer pages.")
+print("StrattV4 Push 1 In/Out navigation applied: safe sibling-track moves, device reorder, Browser columns, Device/parameter banks, Rack chains and sequencer pages.")
