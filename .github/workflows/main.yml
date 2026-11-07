@@ -65,6 +65,7 @@ jobs:
             vendor/DrivenByMoss/src/main/java/de/mossgrabers/framework/view/PadMidiNoteTracker.java \
             vendor/DrivenByMoss/src/main/java/de/mossgrabers/controller/ableton/push/view/PadViewTaskGuard.java \
             tests/java/PadMidiNoteTrackerTest.java \
+            tests/java/PadMidiNoteTrackerStressTest.java \
             tests/java/PadViewTaskGuardTest.java \
             vendor/DrivenByMoss/src/main/java/de/mossgrabers/framework/command/trigger/mode/KnobTouchOwner.java \
             tests/java/KnobTouchOwnerTest.java \
@@ -73,6 +74,7 @@ jobs:
             vendor/DrivenByMoss/src/main/java/de/mossgrabers/framework/mode/NoteEditTouchOwner.java \
             tests/java/NoteEditTouchOwnerTest.java
           java -cp "$test_dir" de.mossgrabers.controller.ableton.push.view.PadMidiNoteTrackerTest
+          java -cp "$test_dir" de.mossgrabers.controller.ableton.push.view.PadMidiNoteTrackerStressTest
           java -cp "$test_dir" de.mossgrabers.controller.ableton.push.view.PadViewTaskGuardTest
           java -cp "$test_dir" de.mossgrabers.framework.command.trigger.mode.KnobTouchOwnerTest
           java -cp "$test_dir" de.mossgrabers.framework.command.trigger.clip.Push1SelectGestureTest
