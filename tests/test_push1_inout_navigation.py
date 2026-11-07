@@ -34,34 +34,60 @@ class Push1InOutNavigationTests(unittest.TestCase):
                 self.assertIn(sequencer_action, source)
                 self.assertIn("public boolean canNavigate ()", source)
 
-    def test_cursor_arrows_move_tracks_one_by_one_and_eight_with_shift(self):
+    def test_cursor_arrows_preserve_driven_by_moss_track_mode_dispatch(self):
         source = PUSH_CURSOR.read_text(encoding="utf-8")
         left = source[source.index("protected void scrollLeft"):source.index("protected void scrollRight")]
         right = source[source.index("protected void scrollRight"):source.index("protected ISceneBank getSceneBank")]
-        self.assertIn("Modes.BROWSER", left)
         self.assertIn("activeMode.selectPreviousItemPage ()", left)
-        self.assertIn("trackBank.selectPreviousItem ()", left)
-        self.assertIn("trackBank.selectPreviousPage ()", left)
-        self.assertIn("isShiftPressed ()", left)
-        self.assertIn("Modes.BROWSER", right)
         self.assertIn("activeMode.selectNextItemPage ()", right)
-        self.assertIn("trackBank.selectNextItem ()", right)
-        self.assertIn("trackBank.selectNextPage ()", right)
-        self.assertIn("isShiftPressed ()", right)
+        self.assertNotIn("trackBank.selectPreviousItem ()", left)
+        self.assertNotIn("trackBank.selectNextItem ()", right)
+        self.assertNotIn("trackBank.selectPreviousPage ()", left)
+        self.assertNotIn("trackBank.selectNextPage ()", right)
 
-    def test_cursor_leds_match_shifted_track_and_scene_pages(self):
+    def test_cursor_leds_preserve_driven_by_moss_shift_semantics(self):
         source = PUSH_CURSOR.read_text(encoding="utf-8")
         update = source[source.index("protected void updateArrowStates"):]
         for token in (
-            "trackBank.canScrollBackwards ()",
-            "trackBank.canScrollForwards ()",
-            "trackBank.canScrollPageBackwards ()",
-            "trackBank.canScrollPageForwards ()",
-            "sceneBank.canScrollPageBackwards ()",
-            "sceneBank.canScrollPageForwards ()",
+            "sceneBank.canScrollBackwards ()",
+            "sceneBank.canScrollForwards ()",
+            "shiftPressed ? mode.hasPreviousItem () : mode.hasPreviousItemPage ()",
+            "shiftPressed ? mode.hasNextItem () : mode.hasNextItemPage ()",
             "isShiftPressed ()",
         ):
             self.assertIn(token, update)
+
+    def test_shift_in_out_moves_only_track_siblings_and_preserves_device_priority(self):
+        left = (COMMANDS / "PageLeftCommand.java").read_text(encoding="utf-8")
+        right = (COMMANDS / "PageRightCommand.java").read_text(encoding="utf-8")
+        helper = (COMMANDS / "Push1TrackMoveCommand.java").read_text(encoding="utf-8")
+        cursor_track = (ROOT / "bitwig/framework/daw/data/CursorTrackImpl.java").read_text(encoding="utf-8")
+        patcher = Path("scripts/apply_push1_navigation.py").read_text(encoding="utf-8")
+
+        for page in (left, right):
+            self.assertIn("Push1DeviceMoveCommand.executeIfRequested", page)
+            self.assertIn("Push1TrackMoveCommand.executeIfRequested", page)
+            self.assertLess(page.index("Push1DeviceMoveCommand.executeIfRequested"),
+                            page.index("Push1TrackMoveCommand.executeIfRequested"))
+
+        for token in (
+            "Modes.SESSION",
+            "Modes.isTrackMode (activeModeID)",
+            "surface.isShiftPressed ()",
+            "cursorTrack.canSelectPrevious ()",
+            "cursorTrack.swapWithPrevious ()",
+            "cursorTrack.canSelectNext ()",
+            "cursorTrack.swapWithNext ()",
+            "return true;",
+        ):
+            self.assertIn(token, helper)
+
+        self.assertIn("createSiblingsTrackBank (NUM_TRACKS_LARGE_BANK, 0, 0, true, false)", cursor_track)
+        self.assertIn("siblingTrackBank.cursorIndex ().markInterested ()", cursor_track)
+        self.assertIn("this.siblingTrackBank.cursorIndex ().get ()", cursor_track)
+        self.assertIn("this.siblingTrackBank.getItemAt (targetIndex)", cursor_track)
+        self.assertNotIn("largeTrackBank", cursor_track)
+        self.assertNotIn("PushCursorCommand.java", patcher)
 
     def test_device_mode_context_is_declared_once(self):
         source = CONTEXT.read_text(encoding="utf-8")
