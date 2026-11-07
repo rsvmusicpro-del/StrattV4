@@ -405,7 +405,7 @@ new_next = """    @Override
     }
 """
 cursor_track = replace_once(cursor_track, old_next, new_next, "Next sibling track move and resolver")
-if ("largeTrackBank" in cursor_track || "HostImpl" in cursor_track):
+if "largeTrackBank" in cursor_track or "HostImpl" in cursor_track:
     raise SystemExit("Flat global track-bank implementation remains")
 for token in (
     "createSiblingsTrackBank (NUM_TRACKS_LARGE_BANK, 0, 0, true, false)",
