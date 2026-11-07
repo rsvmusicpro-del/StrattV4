@@ -89,6 +89,26 @@ class Push1InOutNavigationTests(unittest.TestCase):
         self.assertNotIn("largeTrackBank", cursor_track)
         self.assertNotIn("PushCursorCommand.java", patcher)
 
+    def test_track_move_availability_observables_are_interested_during_init(self):
+        source = (ROOT / "bitwig/framework/daw/data/CursorTrackImpl.java").read_text(encoding="utf-8")
+        constructor_start = source.index("public CursorTrackImpl (")
+        constructor_end = source.index("/** {@inheritDoc} */", constructor_start)
+        constructor = source[constructor_start:constructor_end]
+
+        # canSelectPrevious()/canSelectNext() read these observables with get().
+        # They must be marked interested in the constructor (Bitwig init phase),
+        # not only subscribed later when a mode becomes active.
+        self.assertIn("this.cursorTrack.hasPrevious ().markInterested ()", constructor)
+        self.assertIn("this.cursorTrack.hasNext ().markInterested ()", constructor)
+        self.assertLess(
+            constructor.index("this.cursorTrack.hasPrevious ().markInterested ()"),
+            constructor.index("this.isPinnedAttr = cursorTrack.isPinned ()"),
+        )
+        self.assertLess(
+            constructor.index("this.cursorTrack.hasNext ().markInterested ()"),
+            constructor.index("this.isPinnedAttr = cursorTrack.isPinned ()"),
+        )
+
     def test_device_mode_context_is_declared_once(self):
         source = CONTEXT.read_text(encoding="utf-8")
         self.assertIn("static boolean isDeviceNavigationMode", source)

@@ -325,8 +325,10 @@ cursor_track = replace_once(
     cursor_track,
     "        this.largeTrackBank = ((HostImpl) host).getControllerHost ().createTrackBank (NUM_TRACKS_LARGE_BANK, 0, 0, true);\n",
     "        this.siblingTrackBank = cursorTrack.createSiblingsTrackBank (NUM_TRACKS_LARGE_BANK, 0, 0, true, false);\n"
-    "        this.siblingTrackBank.cursorIndex ().markInterested ();\n",
-    "Create same-level sibling bank including effect tracks",
+    "        this.siblingTrackBank.cursorIndex ().markInterested ();\n"
+    "        this.cursorTrack.hasPrevious ().markInterested ();\n"
+    "        this.cursorTrack.hasNext ().markInterested ();\n",
+    "Initialize cursor-track navigation observables before any get()",
 )
 old_previous = """    @Override
     public void swapWithPrevious ()
@@ -410,6 +412,8 @@ if "largeTrackBank" in cursor_track or "HostImpl" in cursor_track:
 for token in (
     "createSiblingsTrackBank (NUM_TRACKS_LARGE_BANK, 0, 0, true, false)",
     "siblingTrackBank.cursorIndex ().markInterested ()",
+    "this.cursorTrack.hasPrevious ().markInterested ()",
+    "this.cursorTrack.hasNext ().markInterested ()",
     "this.siblingTrackBank.cursorIndex ().get ()",
     "this.siblingTrackBank.getItemAt (targetIndex)",
     "!this.canSelectPrevious ()",
